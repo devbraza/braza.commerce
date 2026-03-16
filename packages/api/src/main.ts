@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { Logger } from 'nestjs-pino';
-import * as cookieParser from 'cookie-parser';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const cookieParser = require('cookie-parser');
 import { AppModule } from './app.module';
 
 async function bootstrap() {
