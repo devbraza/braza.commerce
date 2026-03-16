@@ -192,12 +192,34 @@ function ProfileTab({ profile }: { profile: UserProfile | null }) {
   );
 }
 
-function IntegrationsTab() {
+function IntegrationsTab({ profile }: { profile: UserProfile | null }) {
   const [connected, setConnected] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  const handleDisconnect = () => {
-    if (confirm('Tem certeza? Dados históricos serão mantidos.')) {
+  // Check if Facebook is connected (user has facebookId)
+  useEffect(() => {
+    apiFetch<{ id: string; facebookId?: string | null }>('/auth/me')
+      .then(user => {
+        setConnected(!!user.facebookId);
+      })
+      .catch(() => setConnected(false));
+  }, []);
+
+  const handleConnect = () => {
+    window.location.href = `${API_URL}/auth/facebook`;
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Tem certeza? Dados históricos serão mantidos.')) return;
+    setDisconnecting(true);
+    try {
+      await apiFetch('/users/facebook/disconnect', { method: 'POST' });
       setConnected(false);
+    } catch {
+      // ignore
+    } finally {
+      setDisconnecting(false);
     }
   };
 
@@ -207,7 +229,6 @@ function IntegrationsTab() {
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Facebook icon placeholder */}
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1877f2]/20 text-[#1877f2] text-xs font-bold select-none">f</div>
             <div>
               <p className="text-sm font-semibold text-white">Facebook</p>
@@ -228,19 +249,22 @@ function IntegrationsTab() {
         </div>
 
         {connected && (
-          <div>
-            <p className="mb-2 text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Permissões Ativas</p>
-            <div className="flex flex-wrap gap-1.5">
-              {FACEBOOK_PERMISSIONS.map(perm => (
-                <span
-                  key={perm}
-                  className="rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-zinc-300"
-                >
-                  {perm}
-                </span>
-              ))}
+          <>
+            {profile?.name && (
+              <div>
+                <p className="text-[11px] text-zinc-500">Conectado como</p>
+                <p className="text-sm text-white font-medium">{profile.name} {profile.email ? `(${profile.email})` : ''}</p>
+              </div>
+            )}
+            <div>
+              <p className="mb-2 text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Permissoes Ativas</p>
+              <div className="flex flex-wrap gap-1.5">
+                {FACEBOOK_PERMISSIONS.map(perm => (
+                  <span key={perm} className="rounded-md bg-white/[0.06] px-2 py-0.5 font-mono text-[10px] text-zinc-300">{perm}</span>
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
@@ -248,20 +272,20 @@ function IntegrationsTab() {
         <button
           type="button"
           onClick={handleDisconnect}
-          className="w-full rounded-lg border border-red-500/20 bg-red-500/10 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20"
+          disabled={disconnecting}
+          className="w-full rounded-lg border border-red-500/20 bg-red-500/10 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
         >
-          Desconectar Facebook
+          {disconnecting ? 'Desconectando...' : 'Desconectar Facebook'}
         </button>
       ) : (
         <button
           type="button"
+          onClick={handleConnect}
           className="w-full rounded-lg bg-[#1877F2] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#166FE5]"
         >
           Conectar Facebook
         </button>
       )}
-
-      <SaveButton />
     </div>
   );
 }
@@ -753,7 +777,7 @@ export default function SettingsPage() {
       {/* Tab content card */}
       <div className="max-w-lg rounded-xl border border-white/[0.06] bg-[#111113] p-6">
         {activeTab === 'profile' && <ProfileTab profile={profile} />}
-        {activeTab === 'integrations' && <IntegrationsTab />}
+        {activeTab === 'integrations' && <IntegrationsTab profile={profile} />}
         {activeTab === 'whatsapp' && <WhatsAppTab />}
         {activeTab === 'tracking' && <TrackingTab />}
         {activeTab === 'shipping' && <ShippingTab />}

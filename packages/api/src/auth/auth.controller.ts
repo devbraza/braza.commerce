@@ -43,14 +43,18 @@ export class AuthController {
     });
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/dashboard`);
+    res.redirect(`${frontendUrl}/settings?tab=integrations`);
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
   async me(@Req() req: Request) {
-    const user = req.user as { id: string };
-    return this.authService.getMe(user.id);
+    // v1: try JWT first, fallback to DEFAULT_USER_ID
+    const jwtUser = req.user as { id: string } | undefined;
+    const userId = jwtUser?.id || process.env.DEFAULT_USER_ID;
+    if (!userId) {
+      return { id: null, email: null, name: null, timezone: 'America/Sao_Paulo' };
+    }
+    return this.authService.getMe(userId);
   }
 
   @Get('logout')
