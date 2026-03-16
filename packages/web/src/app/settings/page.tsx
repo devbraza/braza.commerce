@@ -51,7 +51,6 @@ const FACEBOOK_PERMISSIONS = [
   'ads_management',
   'ads_read',
   'business_management',
-  'whatsapp_business_management',
 ];
 
 // ---------- Sub-components ----------
@@ -268,53 +267,305 @@ function IntegrationsTab() {
 }
 
 function WhatsAppTab() {
+  const [instanceId, setInstanceId] = useState('');
+  const [token, setToken] = useState('');
+  const [clientToken, setClientToken] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [credentialsSaved, setCredentialsSaved] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'waiting' | null>(null);
+  const [showQr, setShowQr] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Check if credentials are already saved
+  useEffect(() => {
+    apiFetch<{ connected: boolean; error: string }>('/users/whatsapp/status')
+      .then(status => {
+        setCredentialsSaved(true);
+        setConnectionStatus(status.connected ? 'connected' : 'disconnected');
+        if (!status.connected) setShowQr(true);
+      })
+      .catch(() => {
+        setCredentialsSaved(false);
+      });
+  }, []);
+
+  const handleSave = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!instanceId) newErrors.instanceId = 'Campo obrigatório';
+    if (!token) newErrors.token = 'Campo obrigatório';
+    if (!clientToken) newErrors.clientToken = 'Campo obrigatório';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+    setSaving(true);
+    setWebhookStatus(null);
+    try {
+      const result = await apiFetch<{ saved: boolean; webhooksRegistered: boolean }>('/users/whatsapp', {
+        method: 'PUT',
+        body: JSON.stringify({ instanceId, token, clientToken }),
+      });
+      setSaved(true);
+      setCredentialsSaved(true);
+      setWebhookStatus(result.webhooksRegistered ? 'Webhooks registrados com sucesso' : 'Credenciais salvas, mas falha ao registrar webhooks');
+      setTimeout(() => setSaved(false), 3000);
+
+      // Check status after saving
+      const status = await apiFetch<{ connected: boolean }>('/users/whatsapp/status').catch(() => null);
+      if (status?.connected) {
+        setConnectionStatus('connected');
+      } else {
+        setConnectionStatus('waiting');
+        setShowQr(true);
+      }
+    } catch {
+      setWebhookStatus('Erro ao salvar. Verifique as credenciais.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    setRestoring(true);
+    try {
+      const result = await apiFetch<{ restored: boolean }>('/users/whatsapp/restore', { method: 'POST' });
+      if (result.restored) {
+        // Wait a moment then check status
+        setTimeout(async () => {
+          const status = await apiFetch<{ connected: boolean }>('/users/whatsapp/status').catch(() => null);
+          if (status?.connected) {
+            setConnectionStatus('connected');
+            setShowQr(false);
+          } else {
+            setShowQr(true);
+          }
+          setRestoring(false);
+        }, 3000);
+      } else {
+        setShowQr(true);
+        setRestoring(false);
+      }
+    } catch {
+      setShowQr(true);
+      setRestoring(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Desconectar o WhatsApp? Suas credenciais serão mantidas.')) return;
+    await apiFetch('/users/whatsapp/disconnect', { method: 'POST' }).catch(() => null);
+    setConnectionStatus('disconnected');
+    setShowQr(false);
+  };
+
   return (
     <div className="space-y-5">
+      {/* Section 1: Credentials */}
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold select-none">W</div>
           <div>
-            <p className="text-sm font-semibold text-white">WhatsApp Cloud API</p>
-            <p className="text-[11px] text-zinc-500">Conecte seu número para receber e enviar mensagens</p>
+            <p className="text-sm font-semibold text-white">WhatsApp via Z-API</p>
+            <p className="text-[11px] text-zinc-500">Conecte seu WhatsApp para receber e enviar mensagens</p>
           </div>
         </div>
 
         <div className="space-y-3">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">WhatsApp Token</label>
-            <input type="password" placeholder="Token permanente da API" className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/[0.16]" />
+          <div>
+            <InputField label="Instance ID" id="zapi-instance" value={instanceId} onChange={(v) => { setInstanceId(v); setErrors(e => ({ ...e, instanceId: '' })); }} placeholder="ID da instancia Z-API" />
+            {errors.instanceId && <p className="mt-1 text-[10px] text-red-400">{errors.instanceId}</p>}
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Phone Number ID</label>
-            <input type="text" placeholder="ID do número de telefone" className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/[0.16]" />
+          <div>
+            <InputField label="Token" id="zapi-token" value={token} onChange={(v) => { setToken(v); setErrors(e => ({ ...e, token: '' })); }} type="password" placeholder="Token da instancia" />
+            {errors.token && <p className="mt-1 text-[10px] text-red-400">{errors.token}</p>}
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Facebook App Secret</label>
-            <input type="password" placeholder="App Secret do Meta Developers" className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/[0.16]" />
+          <div>
+            <InputField label="Client-Token" id="zapi-client-token" value={clientToken} onChange={(v) => { setClientToken(v); setErrors(e => ({ ...e, clientToken: '' })); }} type="password" placeholder="Token de seguranca da conta" />
+            {errors.clientToken && <p className="mt-1 text-[10px] text-red-400">{errors.clientToken}</p>}
           </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving || !instanceId || !token || !clientToken}
+          className="mt-2 rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {saving ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar'}
+        </button>
+
+        {webhookStatus && (
+          <p className={`text-[11px] ${webhookStatus.includes('sucesso') ? 'text-emerald-400' : 'text-amber-400'}`}>
+            {webhookStatus}
+          </p>
+        )}
+
+        <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 space-y-1.5">
+          <p className="text-[11px] text-zinc-500 font-medium">Como configurar:</p>
+          <p className="text-[11px] text-zinc-400">1. Acesse <a href="https://z-api.io" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline">z-api.io</a> e crie uma instancia</p>
+          <p className="text-[11px] text-zinc-400">2. Copie o Instance ID e Token da instancia</p>
+          <p className="text-[11px] text-zinc-400">3. Va em Security e copie o Client-Token</p>
+          <p className="text-[11px] text-zinc-400">4. Cole os dados acima e clique Salvar</p>
+          <p className="text-[11px] text-zinc-400">5. Escaneie o QR Code abaixo com seu celular</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-3">
-        <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Configuração do Webhook no Meta Developers</p>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] text-zinc-500">Webhook URL</label>
-          <div className="flex items-center gap-2">
-            <input type="text" readOnly value="https://api.brazachat.shop/webhook/whatsapp" className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none" />
-            <button type="button" onClick={() => navigator.clipboard.writeText('https://api.brazachat.shop/webhook/whatsapp')} className="rounded-lg bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white">Copiar</button>
+      {/* Section 2: Connection (visible after save) */}
+      {credentialsSaved && (
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Conexao WhatsApp</p>
+            {connectionStatus === 'connected' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
+                Conectado
+              </span>
+            )}
+            {connectionStatus === 'disconnected' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-400 inline-block" />
+                Desconectado
+              </span>
+            )}
+            {connectionStatus === 'waiting' && (
+              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse inline-block" />
+                Aguardando QR
+              </span>
+            )}
           </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] text-zinc-500">Verify Token</label>
-          <div className="flex items-center gap-2">
-            <input type="text" readOnly value="brazachat-webhook-2026" className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none" />
-            <button type="button" onClick={() => navigator.clipboard.writeText('brazachat-webhook-2026')} className="rounded-lg bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white">Copiar</button>
-          </div>
-        </div>
-        <p className="text-[10px] text-zinc-500">Cole a URL e o token no painel do Meta Developers → WhatsApp → Configuration → Webhook</p>
-      </div>
 
-      <SaveButton />
+          {/* QR Code */}
+          {showQr && connectionStatus !== 'connected' && (
+            <WhatsAppQrCodeInline
+              onConnected={() => {
+                setConnectionStatus('connected');
+                setShowQr(false);
+              }}
+            />
+          )}
+
+          {/* Device info */}
+          {connectionStatus === 'connected' && <WhatsAppDeviceInline />}
+
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {connectionStatus === 'disconnected' && (
+              <button
+                type="button"
+                onClick={handleRestore}
+                disabled={restoring}
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {restoring ? 'Reconectando...' : 'Reconectar'}
+              </button>
+            )}
+            {connectionStatus === 'connected' && (
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20"
+              >
+                Desconectar WhatsApp
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Inline QR Code component (avoids separate file import issues with 'use client')
+function WhatsAppQrCodeInline({ onConnected }: { onConnected: () => void }) {
+  const [qrBase64, setQrBase64] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failures, setFailures] = useState(0);
+
+  const fetchQr = async () => {
+    try {
+      setLoading(true);
+      const data = await apiFetch<{ base64?: string; connected?: boolean }>('/users/whatsapp/qrcode');
+      if (data.connected) { onConnected(); return; }
+      if (data.base64) { setQrBase64(data.base64); setFailures(0); }
+    } catch {
+      setFailures(prev => prev + 1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchQr(); }, []);// eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (failures >= 3) return;
+    const interval = setInterval(async () => {
+      const status = await apiFetch<{ connected: boolean }>('/users/whatsapp/status').catch(() => null);
+      if (status?.connected) { onConnected(); return; }
+      fetchQr();
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [failures]);// eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading && !qrBase64) {
+    return <div className="flex justify-center py-6"><div className="h-48 w-48 rounded-xl bg-white/[0.06] animate-pulse" /></div>;
+  }
+
+  if (failures >= 3) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-4">
+        <p className="text-xs text-zinc-500">QR Code expirado</p>
+        <button type="button" onClick={() => { setFailures(0); fetchQr(); }} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+          Gerar novo QR Code
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-3 py-2">
+      {qrBase64 && (
+        <div className="rounded-xl border border-white/[0.08] bg-white p-3">
+          <img src={qrBase64.startsWith('data:') ? qrBase64 : `data:image/png;base64,${qrBase64}`} alt="QR Code WhatsApp" className="h-48 w-48" />
+        </div>
+      )}
+      <p className="text-[11px] text-zinc-500">Abra o WhatsApp → Aparelhos conectados → Conectar → Escaneie</p>
+    </div>
+  );
+}
+
+// Inline Device card
+function WhatsAppDeviceInline() {
+  const [device, setDevice] = useState<{ phone: string; name: string; photo: string; deviceModel: string; isBusiness: boolean } | null>(null);
+
+  useEffect(() => {
+    apiFetch<typeof device>('/users/whatsapp/device').then(setDevice).catch(() => null);
+  }, []);
+
+  if (!device) return null;
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+      <div className="flex items-center gap-3">
+        {device.photo ? (
+          <img src={device.photo} alt={device.name} className="h-10 w-10 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold">
+            {device.name?.charAt(0)?.toUpperCase() || 'W'}
+          </div>
+        )}
+        <div>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-white">{device.name || 'WhatsApp'}</p>
+            {device.isBusiness && (
+              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400 uppercase">Business</span>
+            )}
+          </div>
+          <p className="text-[11px] text-zinc-500 font-mono">+{device.phone}</p>
+          {device.deviceModel && <p className="text-[10px] text-zinc-600">{device.deviceModel}</p>}
+        </div>
+      </div>
     </div>
   );
 }

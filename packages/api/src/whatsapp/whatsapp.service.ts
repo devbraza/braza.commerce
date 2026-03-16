@@ -1,46 +1,98 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../common/services/prisma.service';
+import { CryptoService } from '../common/services/crypto.service';
 import { LeadsService } from '../leads/leads.service';
 import { EventsService } from '../events/events.service';
 
+interface ZApiIncomingMessage {
+  phone?: string;
+  fromMe?: boolean;
+  messageId?: string;
+  momment?: number;
+  status?: string;
+  chatName?: string;
+  senderName?: string;
+  isGroup?: boolean;
+  text?: { message?: string };
+  image?: { imageUrl?: string; caption?: string; mimeType?: string };
+  audio?: { audioUrl?: string; mimeType?: string };
+  document?: { documentUrl?: string; fileName?: string; mimeType?: string };
+}
+
 @Injectable()
 export class WhatsappService {
+  private readonly logger = new Logger(WhatsappService.name);
+
   constructor(
     private readonly prisma: PrismaService,
+    private readonly crypto: CryptoService,
     private readonly leads: LeadsService,
     private readonly events: EventsService,
   ) {}
 
-  verifyWebhook(mode: string, token: string, challenge: string): string | null {
-    if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-      return challenge;
-    }
-    return null;
+  // Story 3.1: Handle Z-API webhook payload
+  async handleZApiWebhook(body: unknown, userId: string) {
+    const msg = body as ZApiIncomingMessage;
+
+    // AC4: Discard fromMe messages (already saved on send, avoids duplication)
+    if (msg.fromMe === true) return;
+
+    // Ignore group messages
+    if (msg.isGroup === true) return;
+
+    if (!msg.phone) return;
+
+    await this.processIncomingMessage(msg, userId);
   }
 
-  async handleWebhook(body: unknown, userId: string) {
-    const entries = (body as Record<string, unknown[]>)?.entry || [];
+  // Story 3.2: Handle delivery status updates
+  async handleDeliveryStatus(body: unknown) {
+    const payload = body as { messageId?: string; status?: string };
+    if (!payload.messageId || !payload.status) return;
 
-    for (const entry of entries) {
-      const changes = (entry as Record<string, unknown[]>)?.changes || [];
-      for (const change of changes as Array<Record<string, unknown>>) {
-        if (change.field === 'messages') {
-          const value = change.value as Record<string, unknown[]>;
-          const messages = value?.messages || [];
-          for (const msg of messages) {
-            await this.processIncomingMessage(msg as Record<string, unknown>, userId);
-          }
-        }
-      }
-    }
+    const statusMap: Record<string, string> = {
+      SENT: 'sent',
+      RECEIVED: 'delivered',
+      READ: 'read',
+      PLAYED: 'read',
+    };
+
+    const mappedStatus = statusMap[payload.status];
+    if (!mappedStatus) return;
+
+    await this.prisma.message.updateMany({
+      where: { whatsappMsgId: payload.messageId },
+      data: { status: mappedStatus },
+    });
   }
 
-  private async processIncomingMessage(msg: Record<string, unknown>, userId: string) {
-    const phone = msg.from as string;
-    const messageBody = (msg.text as Record<string, string>)?.body || '';
+  private async processIncomingMessage(msg: ZApiIncomingMessage, userId: string) {
+    const phone = msg.phone!;
 
-    // Try to extract click_id from message (format: ref:ck_XXXXXXX)
-    const clickIdMatch = messageBody.match(/ref:(ck_[A-Za-z0-9]{7})/);
+    // Determine message content and type from Z-API payload
+    let content = '';
+    let type = 'text';
+    let mediaUrl: string | null = null;
+    let fileName: string | null = null;
+
+    if (msg.text?.message) {
+      content = msg.text.message;
+      type = 'text';
+    } else if (msg.image?.imageUrl) {
+      content = msg.image.caption || '';
+      type = 'image';
+      mediaUrl = msg.image.imageUrl;
+    } else if (msg.audio?.audioUrl) {
+      type = 'audio';
+      mediaUrl = msg.audio.audioUrl;
+    } else if (msg.document?.documentUrl) {
+      type = 'document';
+      mediaUrl = msg.document.documentUrl;
+      fileName = msg.document.fileName || null;
+    }
+
+    // Extract click_id from text message (format: ref:ck_XXXXXXX)
+    const clickIdMatch = content.match(/ref:(ck_[A-Za-z0-9]{7})/);
     const clickId = clickIdMatch?.[1];
 
     let leadData: Record<string, string | undefined> = {};
@@ -59,7 +111,10 @@ export class WhatsappService {
       }
     }
 
-    const lead = await this.leads.findOrCreate(userId, phone, leadData);
+    const lead = await this.leads.findOrCreate(userId, phone, {
+      ...leadData,
+      name: msg.senderName || msg.chatName || undefined,
+    });
 
     // Update lead status to contacted
     if (lead.status === 'new') {
@@ -84,11 +139,13 @@ export class WhatsappService {
     await this.prisma.message.create({
       data: {
         conversationId: conversation.id,
-        content: messageBody || (msg.type as string) || '',
-        type: (msg.type as string) || 'text',
+        content: content || type,
+        type,
         direction: 'inbound',
         status: 'received',
-        whatsappMsgId: msg.id as string,
+        whatsappMsgId: msg.messageId || null,
+        mediaUrl,
+        fileName,
       },
     });
 
@@ -106,7 +163,12 @@ export class WhatsappService {
     }
   }
 
-  async sendMessage(userId: string, conversationId: string, content: string) {
+  // Story 3.2: Send message via Z-API (text, image, audio, document)
+  async sendMessage(
+    userId: string,
+    conversationId: string,
+    opts: { content: string; type?: string; mediaUrl?: string; fileName?: string },
+  ) {
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, userId },
       include: { lead: true },
@@ -114,36 +176,63 @@ export class WhatsappService {
 
     if (!conversation) throw new Error('Conversation not found');
 
-    const token = process.env.WHATSAPP_TOKEN;
-    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { zapiInstanceId: true, zapiToken: true, zapiClientToken: true },
+    });
 
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: conversation.lead.phone,
-          type: 'text',
-          text: { body: content },
-        }),
-      },
-    );
+    if (!user?.zapiInstanceId || !user?.zapiToken || !user?.zapiClientToken) {
+      throw new Error('WhatsApp não configurado. Vá em Settings > WhatsApp.');
+    }
 
-    const result = await response.json();
+    const token = this.crypto.decrypt(user.zapiToken);
+    const clientToken = this.crypto.decrypt(user.zapiClientToken);
+    const baseApiUrl = `https://api.z-api.io/instances/${user.zapiInstanceId}/token/${token}`;
+    const headers = { 'Client-Token': clientToken, 'Content-Type': 'application/json' };
+    const phone = conversation.lead.phone;
+    const type = opts.type || 'text';
+
+    let endpoint: string;
+    let body: Record<string, unknown>;
+
+    switch (type) {
+      case 'image':
+        endpoint = `${baseApiUrl}/send-image`;
+        body = { phone, image: opts.mediaUrl, caption: opts.content || '' };
+        break;
+      case 'audio':
+        endpoint = `${baseApiUrl}/send-audio`;
+        body = { phone, audio: opts.mediaUrl };
+        break;
+      case 'document':
+        endpoint = `${baseApiUrl}/send-document`;
+        body = { phone, document: opts.mediaUrl, fileName: opts.fileName || 'file' };
+        break;
+      default:
+        endpoint = `${baseApiUrl}/send-text`;
+        body = { phone, message: opts.content };
+        break;
+    }
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    const result = (await response.json()) as { zaapId?: string; messageId?: string };
 
     const message = await this.prisma.message.create({
       data: {
         conversationId,
-        content,
-        type: 'text',
+        content: opts.content || type,
+        type,
         direction: 'outbound',
         status: response.ok ? 'sent' : 'failed',
-        whatsappMsgId: result?.messages?.[0]?.id || null,
+        whatsappMsgId: result?.messageId || null,
+        zaapId: result?.zaapId || null,
+        mediaUrl: opts.mediaUrl || null,
+        fileName: opts.fileName || null,
       },
     });
 
@@ -165,7 +254,7 @@ export class WhatsappService {
             name: true,
             status: true,
             product: { select: { name: true } },
-            campaign: { select: { name: true, creativeName: true } },
+            campaign: { select: { name: true } },
           },
         },
         messages: { take: 1, orderBy: { createdAt: 'desc' } },
@@ -183,7 +272,7 @@ export class WhatsappService {
   }
 
   async getMessages(userId: string, conversationId: string) {
-    const conversation = await this.getConversation(userId, conversationId);
+    await this.getConversation(userId, conversationId);
 
     await this.prisma.conversation.update({
       where: { id: conversationId },

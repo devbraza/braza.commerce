@@ -12,6 +12,8 @@ import { EventsModule } from './events/events.module';
 import { OrdersModule } from './orders/orders.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AiModule } from './ai/ai.module';
+import { UsersModule } from './users/users.module';
+import { UploadModule } from './upload/upload.module';
 import { CryptoService } from './common/services/crypto.service';
 import { PrismaService } from './common/services/prisma.service';
 
@@ -37,6 +39,8 @@ import { PrismaService } from './common/services/prisma.service';
     OrdersModule,
     DashboardModule,
     AiModule,
+    UsersModule,
+    UploadModule,
   ],
   providers: [CryptoService, PrismaService],
   exports: [CryptoService, PrismaService],

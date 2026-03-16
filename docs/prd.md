@@ -12,6 +12,8 @@
 | 2026-03-15 | 0.6.0 | Campos adsetName, adName, creativeName removidos do formulário de campanhas v1 — dados passados via UTMs padrão configuráveis em Settings > Tracking | Morgan (PM) |
 | 2026-03-15 | 0.7.0 | UTMs: remover seletores de utm_source/utm_medium padrão da aba Tracking — UTMs devem ser puxados diretamente da campanha real do Facebook (nomes reais de campanha, grupo de anúncio, etc.), não valores fixos. Domínio de tracking será configurado após registro do domínio definitivo. Política de privacidade será página apontada após domínio definido | Morgan (PM) |
 | 2026-03-15 | 0.8.0 | Adicionados FR20 (página Teste — UTMs + CAPI) e FR21 (template UTMs para Facebook Ads na aba Tracking). Módulo Teste adicionado à lista de telas (P1) | Morgan (PM) |
+| 2026-03-16 | 0.9.0 | Domínio atualizado de brazachat.com para brazachat.shop (registro real). Aba WhatsApp adicionada em Settings para configuração da WhatsApp Cloud API. Privacy URL e tracking domain definidos em produção | Morgan (PM) |
+| 2026-03-16 | 1.0.0 | **Migração WhatsApp Cloud API → Z-API.** Integração WhatsApp simplificada via Z-API (SaaS). Removida dependência direta da WhatsApp Cloud API, Meta Business Verification e webhook com validação HMAC. Settings > WhatsApp simplificado para Instance ID + Token + Client-Token. Webhook simplificado (JSON direto). Suporte a mídias (imagem, áudio, documento) adicionado ao MVP. Modelo SaaS multi-instância documentado para fase futura | Morgan (PM) |
 
 ---
 
@@ -47,13 +49,13 @@ Empresas que vendem via WhatsApp a partir de anúncios Meta enfrentam um problem
 ### Functional Requirements
 
 **Tracking & Redirecionamento:**
-- **FR1:** O sistema deve gerar links de tracking únicos por campanha (ex: `https://crm.dominio.com/c/ABX92`) via HTTPS obrigatório, que capturam fbclid, IP, user_agent, timestamp e UTM parameters no clique
+- **FR1:** O sistema deve gerar links de tracking únicos por campanha (ex: `https://link.brazachat.shop/c/ABX92`) via HTTPS obrigatório, que capturam fbclid, IP, user_agent, timestamp e UTM parameters no clique
 - **FR2:** O sistema deve gerar um click_id único por clique (formato: `ck_XXXXXXX`), formatar o `fbc` parameter no padrão Meta (`fb.1.{timestamp}.{fbclid}`), gerar `fbp` (browser ID no formato `fb.1.{timestamp}.{random}`), e redirecionar o usuário para WhatsApp com mensagem dinâmica contendo o produto e click_id invisível
 - **FR2.1:** O sistema deve capturar UTM parameters reais passados pela Meta Ads na URL do clique (utm_source, utm_medium, utm_campaign, utm_content, utm_term) — esses valores vêm diretamente do Facebook com os nomes reais de campanha, grupo de anúncio e criativo. Os UTMs são armazenados no registro de clique tal como recebidos, sem valores fixos pré-definidos
 - **FR3:** O evento ViewContent deve ser disparado automaticamente quando o lead envia a primeira mensagem no WhatsApp
 
 **Conexão Meta & Contas:**
-- **FR4:** O sistema deve permitir autenticação via Facebook Login (OAuth) com permissões `ads_management`, `ads_read`, `business_management`, `whatsapp_business_management`
+- **FR4:** O sistema deve permitir autenticação via Facebook Login (OAuth) com permissões `ads_management`, `ads_read`, `business_management`
 - **FR5:** Após autenticação, o sistema deve recuperar e listar Ad Accounts e Pixels vinculados à conta Meta do usuário
 - **FR6:** O sistema deve respeitar a hierarquia: Ad Account → Pixel → Campaign → Lead → Conversation → Event → Order
 
@@ -99,7 +101,7 @@ Empresas que vendem via WhatsApp a partir de anúncios Meta enfrentam um problem
 - **NFR5:** O sistema deve ser construído com arquitetura modular (NestJS modules) para facilitar evolução para SaaS
 - **NFR6:** O backend deve suportar pelo menos 100 conversas simultâneas por operador sem degradação perceptível
 - **NFR7:** O frontend deve ser responsivo (Web Responsive) para uso em desktop e tablet
-- **NFR8:** Toda comunicação com WhatsApp Cloud API deve usar webhooks com validação de assinatura
+- **NFR8:** Toda comunicação com WhatsApp deve ser feita via Z-API (REST API + webhooks). Webhook de recebimento deve validar origem via IP whitelist ou Client-Token
 - **NFR9:** O sistema deve manter uptime de 99.5% mensal
 - **NFR10:** Dados de clicks e mensagens devem ser retidos por 12 meses; dados de analytics por 24 meses
 - **NFR11:** O link de tracking deve exibir brevemente (splash page ou footer) um aviso de coleta de dados conforme LGPD antes do redirect, ou o domínio de tracking deve ter política de privacidade acessível via link
@@ -107,7 +109,8 @@ Empresas que vendem via WhatsApp a partir de anúncios Meta enfrentam um problem
 - **NFR13:** O formato do parâmetro `fbc` enviado para Meta CAPI deve seguir estritamente o padrão `fb.1.{creation_time}.{fbclid}` — formatos incorretos são rejeitados pela API
 - **NFR14:** Todo frontend DEVE seguir o Braza Design System (`docs/braza-design-system.md`) — cores, tipografia, componentes, animações e ícones conforme documentado. Desvios visuais do padrão Braza são considerados bugs
 - **NFR15:** Conexões WebSocket (Socket.io) devem ser autenticadas via JWT no handshake. Cada socket é associado a um userId e só recebe eventos das suas próprias conversas. Conexões sem token válido são rejeitadas
-- **NFR16:** O endpoint de webhook WhatsApp (`/webhooks/whatsapp`) deve ter URL pública estável em produção (Railway/VPS). Em desenvolvimento, usar ngrok ou Cloudflare Tunnel. Rate limiter independente das rotas autenticadas
+- **NFR15.1:** Credenciais Z-API (Instance ID, Token, Client-Token) devem ser criptografadas com AES-256-GCM via `CryptoService` antes de persistir no banco — mesmo tratamento dos tokens Meta
+- **NFR16:** O endpoint de webhook Z-API (`/webhook/z-api`) deve ter URL pública estável em produção: `https://api.brazachat.shop/webhook/z-api` (Railway). Em desenvolvimento, usar ngrok ou Cloudflare Tunnel. Rate limiter independente das rotas autenticadas. Webhook URL configurada na Z-API via API `PUT /update-webhook-received`
 
 ---
 
@@ -208,7 +211,7 @@ Um único serviço NestJS com módulos bem separados:
 | `meta` | Meta Marketing API, Ad Accounts, Pixels |
 | `campaigns` | CRUD campanhas, geração de links de tracking |
 | `tracking` | Captura de cliques, redirect para WhatsApp |
-| `whatsapp` | WhatsApp Cloud API, webhooks, mensagens |
+| `whatsapp` | Z-API integration, webhooks, envio/recebimento de mensagens |
 | `inbox` | WebSocket para chat real-time |
 | `events` | Conversion API, fila de eventos (Redis/BullMQ) |
 | `orders` | Pedidos, status, etiquetas |
@@ -240,7 +243,7 @@ Um único serviço NestJS com módulos bem separados:
 |-----|-----|-------------|
 | Meta Marketing API | Listar Ad Accounts, Pixels, Campaigns | OAuth token do usuário |
 | Meta Conversion API | Enviar eventos server-side | Access token + pixel_id |
-| WhatsApp Cloud API | Receber/enviar mensagens via webhook | Permanent token + app secret |
+| Z-API | Receber/enviar mensagens WhatsApp via REST API + webhooks | Instance ID + Token + Client-Token (configuráveis em Settings > WhatsApp) |
 | Facebook Login | Autenticação OAuth | App ID + App Secret |
 
 ### Testing Requirements: Unit + Integration
@@ -260,7 +263,7 @@ Um único serviço NestJS com módulos bem separados:
 ┌─────────────────────────────────────────────┐
 │  Vercel (Frontend)                          │
 │  - Next.js 15 (App Router)                  │
-│  - Domínio: app.brazachat.com               │
+│  - Domínio: app.brazachat.shop              │
 │  - Variável: NEXT_PUBLIC_API_URL            │
 │  - Static assets + SSR                      │
 └──────────────┬──────────────────────────────┘
@@ -268,7 +271,7 @@ Um único serviço NestJS com módulos bem separados:
 ┌──────────────▼──────────────────────────────┐
 │  Railway / VPS (Backend)                    │
 │  - NestJS 11 (API + WebSocket + Workers)    │
-│  - Domínio: api.brazachat.com               │
+│  - Domínio: api.brazachat.shop              │
 │  - Redis (addon ou container sidecar)       │
 │  - BullMQ workers (mesmo processo)          │
 │  - Socket.io Gateway (auth JWT no handshake)│
@@ -283,21 +286,21 @@ Um único serviço NestJS com módulos bem separados:
 └─────────────────────────────────────────────┘
 
 Domínios (3 — todos com SSL):
-  app.brazachat.com   → Frontend (Vercel)
-  api.brazachat.com   → Backend API + WebSocket (Railway)
-  link.brazachat.com  → Tracking redirect (mesmo backend,
-                         rota /c/:code com cache Redis)
+  app.brazachat.shop   → Frontend (Vercel)
+  api.brazachat.shop   → Backend API + WebSocket (Railway)
+  link.brazachat.shop  → Tracking redirect (mesmo backend,
+                          rota /c/:code com cache Redis)
 ```
 
 ### Additional Technical Assumptions
 
-- **Domínio de tracking:** No deploy, @devops deve registrar/configurar `link.brazachat.com` com SSL válido. Este domínio aponta para o mesmo backend (Railway) mas a rota `/c/:code` usa cache Redis para garantir < 500ms
-- **Webhook WhatsApp (dev):** Usar ngrok ou Cloudflare Tunnel para expor localhost ao Meta
-- **Webhook WhatsApp (prod):** URL fixa em `api.brazachat.com/webhooks/whatsapp`
+- **Domínio de tracking:** `link.brazachat.shop` registrado e configurado com SSL válido. Este domínio aponta para o mesmo backend (Railway) e a rota `/c/:code` usa cache Redis para garantir < 500ms
+- **Webhook Z-API (dev):** Usar ngrok ou Cloudflare Tunnel para expor localhost. Registrar URL via API Z-API `PUT /update-webhook-received`
+- **Webhook Z-API (prod):** URL fixa em `https://api.brazachat.shop/webhook/z-api` — registrada automaticamente na Z-API ao salvar credenciais em Settings > WhatsApp
 - Database hosting: Supabase (PostgreSQL managed) com connection pooling
-- WhatsApp: WhatsApp Cloud API (oficial da Meta)
+- WhatsApp: Z-API (SaaS) — REST API para envio/recebimento de mensagens. Sem dependência direta da WhatsApp Cloud API
 - Rate limiting: endpoint de tracking (100 req/s por IP) e webhook (rate limiter independente)
-- CORS: `app.brazachat.com` autorizado a acessar `api.brazachat.com`
+- CORS: `app.brazachat.shop` autorizado a acessar `api.brazachat.shop`
 - Logging: Pino para logs estruturados desde Epic 1 (mais performante que Winston para NestJS)
 - Error tracking: Sentry para capturar erros em produção
 - **Criptografia:** CryptoService com AES-256-GCM para tokens Meta. Chave via `ENCRYPTION_KEY` env var
@@ -312,7 +315,7 @@ Domínios (3 — todos com SSL):
 - Todos os links de tracking devem usar **HTTPS** obrigatório (HTTP será rejeitado pela Meta)
 - O domínio de tracking deve ter **certificado SSL válido**
 - O redirect (302) de tracking → WhatsApp é permitido desde que o anúncio indique claramente que o destino é WhatsApp
-- O domínio de tracking deve ter uma **política de privacidade** acessível (ex: `crm.dominio.com/privacy`)
+- O domínio de tracking deve ter uma **política de privacidade** acessível: `https://link.brazachat.shop/privacy` (implementada com texto LGPD)
 - Links não devem conter conteúdo enganoso — o destino real (WhatsApp) deve ser transparente
 
 ### 5.2 UTM Parameters — Geração Automática
@@ -329,7 +332,7 @@ O sistema gera UTMs automaticamente para cada campanha:
 
 **Link completo gerado:**
 ```
-https://crm.dominio.com/c/ABX92?utm_source=facebook&utm_medium=paid_social&utm_campaign=braincaps-janeiro&utm_content=video-depoimento-01&utm_term=interesse-saude-25-45
+https://link.brazachat.shop/c/ABX92?utm_source=facebook&utm_medium=paid_social&utm_campaign=braincaps-janeiro&utm_content=video-depoimento-01&utm_term=interesse-saude-25-45
 ```
 
 Os UTMs são armazenados no registro de Click e propagados para Lead, permitindo análise completa de origem.
@@ -375,8 +378,8 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 - **Chatbot automático** — IA é apenas analítica, não responde clientes
 - **Multi-idioma** — MVP apenas em português
 - **Integração com transportadoras** (Correios, Jadlog) — etiquetas geradas como PDF simples
-- **Envio de mídias** (imagens, áudio, vídeo) pelo CRM — MVP apenas texto
-- **WhatsApp Business API com múltiplos números** — MVP com 1 número por produto
+- **Criação automática de instâncias Z-API** (multi-tenant SaaS) — MVP com instância configurada manualmente pelo operador. Fase SaaS: BrazaChat cria instância automaticamente no cadastro do cliente, cliente só escaneia QR Code
+- **WhatsApp com múltiplos números simultâneos** — MVP com 1 instância Z-API (1 número) por operador
 - **Billing/Subscription** — MVP sem cobrança (validação primeiro)
 - **White-label** — sem customização de marca para clientes
 - **Importação de leads de outras fontes** — apenas via click tracking
@@ -389,7 +392,7 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 | Risk | Impact | Probability | Mitigation |
 |------|--------|-------------|------------|
 | Meta API rate limits bloqueiam envio de eventos | Alto | Média | Fila com backoff exponencial, rate limiting interno (10 events/sec) |
-| WhatsApp Cloud API muda termos de uso | Alto | Baixa | Abstrair integração em módulo isolado, monitorar changelog da Meta |
+| Z-API indisponível ou muda termos/preço | Alto | Baixa | Abstrair integração em módulo isolado (WhatsApp Service interface), permitindo trocar provider (Z-API → Evolution API → Cloud API) sem alterar lógica de negócio |
 | Token OAuth expira e operador não reconecta | Médio | Alta | Alerta no dashboard, refresh token automático quando possível |
 | Click_id não encontrado na mensagem do lead | Médio | Média | Criar lead "órfão" para triagem manual, melhorar encoding do click_id |
 | Volume alto de webhooks sobrecarrega backend | Alto | Média | Processamento assíncrono via Redis, auto-scaling no deployment |
@@ -402,7 +405,7 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 |------|--------|------|
 | Epic 1 | Foundation & Setup | Setup do projeto, Ad Accounts/Pixels (OAuth backend only — sem tela de login v1) |
 | Epic 2 | Products, Campaigns & Tracking | CRUD produtos/campanhas, links de tracking, redirect WhatsApp |
-| Epic 3 | WhatsApp Inbox & Conversations | WhatsApp Cloud API, inbox real-time, ViewContent auto-event |
+| Epic 3 | WhatsApp Inbox & Conversations | Z-API integration, inbox real-time, ViewContent auto-event |
 | Epic 4 | Conversion Events & Meta API | Botões de evento, Conversion API via fila, log de eventos |
 | Epic 5 | Orders & Shipping | Pedidos automáticos, endereço, etiquetas, status tracking |
 | Epic 6 | Dashboard, Leads & Analytics | Dashboard métricas, leads com funil, AI Insights passivo |
@@ -482,7 +485,7 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 
 1. ~~Botão "Conectar com Facebook" na tela de login do frontend~~ — Removido v1
 2. Fluxo OAuth backend implementado: callback → criação de sessão JWT (para uso futuro)
-3. Permissões solicitadas: `ads_management`, `ads_read`, `business_management`, `whatsapp_business_management`
+3. Permissões solicitadas: `ads_management`, `ads_read`, `business_management` (WhatsApp gerenciado via Z-API, sem necessidade de permissão Meta)
 4. Ao logar pela primeira vez, cria registro `User` com facebookId, email e name
 5. Ao logar novamente, atualiza accessToken e refreshToken do usuário existente
 6. AccessToken e refreshToken criptografados com `CryptoService` (AES-256-GCM) antes de persistir no banco — nunca armazenados em plaintext
@@ -569,7 +572,7 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 
 **Acceptance Criteria:**
 
-1. Endpoint `GET /c/:trackingCode` público (sem autenticação) via HTTPS obrigatório processa o clique. Servido em `link.brazachat.com`
+1. Endpoint `GET /c/:trackingCode` público (sem autenticação) via HTTPS obrigatório processa o clique. Servido em `link.brazachat.shop`
 2. Lookup do trackingCode primeiro no Redis (cache), fallback para PostgreSQL se cache miss. Resultado cacheado em Redis com TTL 1h
 3. Sistema captura e salva no registro Click: fbclid (query param), ip, userAgent, timestamp, e todos os UTM parameters (utm_source, utm_medium, utm_campaign, utm_content, utm_term)
 4. Sistema gera click_id único no formato `ck_XXXXXXX` (7 chars alfanuméricos)
@@ -604,44 +607,45 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 
 ### Epic 3: WhatsApp Inbox & Conversations
 
-**Goal:** Integrar com WhatsApp Cloud API para receber e enviar mensagens, vincular leads aos cliques via click_id, e entregar uma Inbox real-time estilo WhatsApp Web. Ao final deste epic, o operador recebe mensagens dos leads e responde direto pelo CRM.
+**Goal:** Integrar com Z-API para receber e enviar mensagens WhatsApp, vincular leads aos cliques via click_id, e entregar uma Inbox real-time estilo WhatsApp Web. Ao final deste epic, o operador recebe mensagens dos leads e responde direto pelo CRM.
 
-#### Story 3.1: WhatsApp Cloud API Webhook Setup
+#### Story 3.1: Z-API Webhook Setup & Message Reception
 
 > As a **developer**,
-> I want to configure the WhatsApp Cloud API webhook to receive messages in the backend,
+> I want to configure the Z-API webhook to receive WhatsApp messages in the backend,
 > so that the system captures all messages sent by leads.
 
 **Acceptance Criteria:**
 
-1. Endpoint `GET /webhooks/whatsapp` para verificação do webhook (challenge response) conforme documentação Meta
-2. Endpoint `POST /webhooks/whatsapp` recebe notificações de mensagens com validação de assinatura (X-Hub-Signature-256)
-3. Webhook processa tipos de mensagem: text, image, audio, document, location
-4. Ao receber primeira mensagem de um número, sistema tenta vincular ao Lead existente via click_id extraído da mensagem
+1. Endpoint `POST /webhook/z-api` recebe notificações de mensagens da Z-API (JSON direto, sem validação HMAC)
+2. Webhook processa tipos de mensagem: text (campo `text.message`), image (`image.imageUrl`), audio (`audio.audioUrl`), document (`document.documentUrl`)
+3. Payload da Z-API mapeado para modelo interno: `phone` → telefone do lead, `messageId` → whatsappMsgId, `momment` → timestamp, `chatName`/`senderName` → nome do lead, `fromMe` → direction (inbound/outbound)
+4. Ao receber primeira mensagem de um número, sistema tenta vincular ao Lead existente via click_id extraído do campo `text.message`
 5. Se click_id encontrado na mensagem, associa conversation ao lead/click correspondente
 6. Se click_id não encontrado, cria lead órfão com status `unmatched` para triagem manual
-7. Mensagem recebida salva no banco: conversationId, content, type (text/image/etc), direction (inbound), timestamp
+7. Mensagem recebida salva no banco: conversationId, content, type (text/image/audio/document), direction (inbound), timestamp, mediaUrl (se mídia)
 8. Logs estruturados para cada webhook recebido (debug de integração)
 9. Retorna HTTP 200 imediatamente e processa mensagem de forma assíncrona (fila Redis) para não bloquear webhook
-10. Endpoint protegido contra replay attacks (validação de timestamp da notificação)
-11. Webhook URL em produção: `https://api.brazachat.com/webhooks/whatsapp` (URL pública estável no Railway). Em dev: ngrok ou Cloudflare Tunnel
+10. Na inicialização do backend, registra a webhook URL na Z-API via `PUT https://api.z-api.io/instances/{instanceId}/token/{token}/update-webhook-received` com header `Client-Token`
+11. Webhook URL em produção: `https://api.brazachat.shop/webhook/z-api` (URL pública estável no Railway). Em dev: ngrok ou Cloudflare Tunnel
 12. Rate limiter independente no endpoint webhook (separado das rotas autenticadas) — protege contra flood
 
-#### Story 3.2: Send Messages via WhatsApp Cloud API
+#### Story 3.2: Send Messages via Z-API
 
 > As an **operator**,
-> I want to send text messages to leads directly from the CRM,
+> I want to send messages to leads directly from the CRM,
 > so that I can respond without leaving the system.
 
 **Acceptance Criteria:**
 
-1. Endpoint `POST /conversations/:id/messages` envia mensagem de texto via WhatsApp Cloud API
-2. Mensagem enviada salva no banco com direction `outbound`, status `sent`
-3. Webhook de status update (delivered, read) atualiza status da mensagem no banco
-4. Se envio falhar (token inválido, número bloqueado, rate limit), retorna erro descritivo ao frontend
-5. Validação: conversationId deve existir e pertencer ao usuário autenticado
-6. Mensagens suportadas no MVP: apenas texto (imagens e mídias em epic futuro)
-7. Rate limiting por conversa: máximo 30 mensagens/minuto (respeitar limites da Meta)
+1. Endpoint `POST /conversations/:id/messages` envia mensagem via Z-API: `POST https://api.z-api.io/instances/{instanceId}/token/{token}/send-text` com header `Client-Token`
+2. Payload Z-API: `{ "phone": "{leadPhone}", "message": "{content}" }`
+3. Mensagem enviada salva no banco com direction `outbound`, status `sent`, e `zaapId` + `messageId` da resposta Z-API
+4. Webhook de status update (delivery) via Z-API atualiza status da mensagem no banco
+5. Se envio falhar (instância desconectada, número inválido), retorna erro descritivo ao frontend
+6. Validação: conversationId deve existir e pertencer ao usuário autenticado
+7. Mensagens suportadas no MVP: texto, imagem, áudio e documento (Z-API suporta todos nativamente)
+8. Rate limiting por conversa: máximo 30 mensagens/minuto
 
 #### Story 3.3: Inbox UI — Conversation List
 
@@ -677,7 +681,7 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 5. Campo de input na parte inferior com botão enviar e suporte a Enter para enviar
 6. WebSocket (Socket.io) autenticado via JWT no handshake (`client.handshake.auth.token`). Conexão rejeitada se token inválido ou expirado
 7. Cada socket associado ao userId do operador — só recebe eventos das suas próprias conversas (isolamento multi-tenant no real-time)
-8. Novas mensagens aparecem instantaneamente na conversa aberta e atualizam a sidebar
+8. Novas mensagens (recebidas via webhook Z-API) aparecem instantaneamente na conversa aberta e atualizam a sidebar
 9. Auto-scroll para última mensagem ao abrir conversa e ao receber nova mensagem
 10. Loading skeleton ao carregar histórico de mensagens
 11. Histórico de mensagens paginado (scroll up para carregar mensagens anteriores)
@@ -900,11 +904,24 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 
 **Acceptance Criteria:**
 
-1. Tela "Settings" com abas: Profile, Integrations, Tracking, Shipping
+1. Tela "Settings" com abas: Profile, Integrations, WhatsApp, Tracking, Shipping
 2. Aba Profile: nome, email (read-only do Facebook), foto, timezone
 3. Aba Integrations: status da conexão Facebook (conectado/desconectado), botão reconectar, lista de permissões atuais, data da última sincronização de Ad Accounts
-4. Aba Tracking (NOVA):
-   - Campo "Domínio de Tracking": domínio customizado para links de campanha (ex: `track.brazachat.com`). Default: domínio principal da aplicação
+3.1. Aba WhatsApp (NOVA): Configuração e conexão WhatsApp via Z-API. Dividida em 2 seções:
+   **Seção 1 — Credenciais Z-API:**
+   - **Instance ID:** ID da instância Z-API (campo texto) — por instância
+   - **Token:** Token da instância Z-API (campo password) — por instância
+   - **Client-Token:** Token de segurança da conta Z-API (campo password) — por conta (vale para todas as instâncias)
+   - **Botão "Salvar":** Persiste credenciais criptografadas (AES-256-GCM) no banco e registra automaticamente as webhook URLs na Z-API
+   - Texto de ajuda: "1. Acesse z-api.io → 2. Crie uma instância → 3. Cole Instance ID e Token → 4. Vá em Security e copie o Client-Token → 5. Clique Salvar → 6. Escaneie o QR Code abaixo"
+   **Seção 2 — Conexão WhatsApp (aparece após salvar credenciais):**
+   - **Status da Conexão:** Indicador visual (🟢 Conectado / 🔴 Desconectado / 🟡 Aguardando QR) — via Z-API `GET /status` (campos: `connected`, `smartphoneConnected`, `error`)
+   - **QR Code embutido:** Se instância não conectada, exibir QR Code (base64) dentro do dashboard via Z-API `GET /qr-code/image`. Auto-refresh a cada 20s (WhatsApp invalida QR a cada 20s). Máximo 3 tentativas, depois botão "Gerar novo QR". Ao conectar, QR desaparece automaticamente
+   - **Dados do dispositivo (após conectar):** Exibir informações do WhatsApp conectado via Z-API `GET /device` — número de telefone, nome do perfil, foto, modelo do dispositivo, se é Business
+   - **Botão "Reconectar":** Se desconectado, tenta restaurar sessão via Z-API `GET /restore-session`. Se falhar, exibe QR Code novamente
+   - **Botão "Desconectar WhatsApp":** Desconecta a instância (com confirmação)
+4. Aba Tracking:
+   - Campo "Domínio de Tracking": domínio customizado para links de campanha. Default: `link.brazachat.shop`
    - Preview de como o link fica com o domínio configurado: `https://{dominio}/c/ABX92?utm_source=...`
    - Checkbox "Incluir UTMs automaticamente nos links" (ativado por default)
    - Configuração de UTM padrão: permite ao operador definir `utm_source` padrão (facebook/instagram/custom) e `utm_medium` padrão (paid_social/cpc/custom)
@@ -952,7 +969,7 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 | Problem Definition & Context | PASS |
 | MVP Scope Definition | PASS (Out of Scope section added) |
 | User Experience Requirements | PASS |
-| Functional Requirements | PASS (19 FRs) |
+| Functional Requirements | PASS (21 FRs) |
 | Non-Functional Requirements | PASS (10 NFRs) |
 | Epic & Story Structure | PASS (6 epics, 25 stories) |
 | Technical Guidance | PASS |

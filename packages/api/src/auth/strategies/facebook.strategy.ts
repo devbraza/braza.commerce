@@ -13,7 +13,6 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
         'ads_management',
         'ads_read',
         'business_management',
-        'whatsapp_business_management',
       ],
       profileFields: ['id', 'emails', 'name', 'displayName'],
     });

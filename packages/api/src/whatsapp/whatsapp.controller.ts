@@ -4,56 +4,51 @@ import {
   Post,
   Body,
   Param,
-  Query,
   Req,
   Res,
   UseGuards,
   NotFoundException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { Logger } from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
 import { EventsService } from '../events/events.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { WebhookSignatureGuard } from '../common/guards/webhook-signature.guard';
+import { WebhookRateLimitGuard, MessageRateLimitGuard } from '../common/guards/rate-limit.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { CreateConversationEventDto } from './dto/create-conversation-event.dto';
 
 @Controller()
 export class WhatsappController {
+  private readonly logger = new Logger(WhatsappController.name);
+
   constructor(
     private readonly whatsappService: WhatsappService,
     private readonly eventsService: EventsService,
   ) {}
 
-  // Webhook verification (no auth)
-  @Get('webhook/whatsapp')
-  verifyWebhook(
-    @Query('hub.mode') mode: string,
-    @Query('hub.verify_token') token: string,
-    @Query('hub.challenge') challenge: string,
-    @Res() res: Response,
-  ) {
-    const result = this.whatsappService.verifyWebhook(mode, token, challenge);
-    if (result) {
-      res.status(200).send(result);
-    } else {
-      res.status(403).send('Forbidden');
+  // Z-API webhook — receives messages (no HMAC, JSON direct)
+  @Post('webhook/z-api')
+  @UseGuards(WebhookRateLimitGuard)
+  handleZApiWebhook(@Body() body: unknown, @Res() res: Response) {
+    res.status(200).send('OK');
+
+    const userId = process.env.DEFAULT_USER_ID;
+    if (userId) {
+      this.whatsappService.handleZApiWebhook(body, userId).catch(err => {
+        this.logger.error('Webhook processing failed', err);
+      });
     }
   }
 
-  // FIX-001: Webhook connected to service
-  // FIX-003: Signature validation via guard
-  @Post('webhook/whatsapp')
-  @UseGuards(WebhookSignatureGuard)
-  async handleWebhook(@Body() body: unknown, @Res() res: Response) {
-    // Respond immediately to Meta (required within 5 seconds)
-    res.status(200).send('EVENT_RECEIVED');
-
-    // Process asynchronously — v1 single-tenant uses DEFAULT_USER_ID
-    const userId = process.env.DEFAULT_USER_ID;
-    if (userId) {
-      await this.whatsappService.handleWebhook(body, userId);
-    }
+  // Z-API delivery status webhook
+  @Post('webhook/z-api/delivery')
+  @UseGuards(WebhookRateLimitGuard)
+  handleZApiDelivery(@Body() body: unknown, @Res() res: Response) {
+    res.status(200).send('OK');
+    this.whatsappService.handleDeliveryStatus(body).catch(err => {
+      this.logger.error('Delivery webhook processing failed', err);
+    });
   }
 
   // Conversations list
@@ -72,7 +67,6 @@ export class WhatsappController {
     return this.whatsappService.getMessages(user.id, id);
   }
 
-  // FIX-007: Uses service method instead of direct prisma access
   @Post('conversations/:id/events')
   @UseGuards(JwtAuthGuard)
   async createEvent(
@@ -81,10 +75,7 @@ export class WhatsappController {
     @Body() dto: CreateConversationEventDto,
   ) {
     const user = req.user as { id: string };
-    const conv = await this.whatsappService.getConversation(
-      user.id,
-      conversationId,
-    );
+    const conv = await this.whatsappService.getConversation(user.id, conversationId);
     if (!conv) throw new NotFoundException('Conversation not found');
 
     const event = await this.eventsService.createEvent(user.id, {
@@ -109,15 +100,20 @@ export class WhatsappController {
     return event;
   }
 
-  // Send message
+  // Send message via Z-API
   @Post('conversations/:id/messages')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, MessageRateLimitGuard)
   sendMessage(
     @Req() req: Request,
     @Param('id') id: string,
     @Body() dto: SendMessageDto,
   ) {
     const user = req.user as { id: string };
-    return this.whatsappService.sendMessage(user.id, id, dto.content);
+    return this.whatsappService.sendMessage(user.id, id, {
+      content: dto.content,
+      type: dto.type || 'text',
+      mediaUrl: dto.mediaUrl,
+      fileName: dto.fileName,
+    });
   }
 }
