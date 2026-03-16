@@ -195,20 +195,12 @@ function ProfileTab({ profile }: { profile: UserProfile | null }) {
 function IntegrationsTab({ profile }: { profile: UserProfile | null }) {
   const [connected, setConnected] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [debugInfo, setDebugInfo] = useState('loading...');
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  // Check if Facebook is connected (user has active accessToken)
   useEffect(() => {
-    apiFetch<{ id: string; facebookConnected?: boolean; name?: string | null }>('/auth/me')
-      .then(user => {
-        setConnected(!!user.facebookConnected);
-        setDebugInfo(`API_URL=${API_URL} | name=${user.name} | fbConn=${user.facebookConnected}`);
-      })
-      .catch((err) => {
-        setConnected(false);
-        setDebugInfo(`ERROR: ${(err as Error).message} | API_URL=${API_URL}`);
-      });
+    apiFetch<{ id: string; facebookConnected?: boolean }>('/auth/me')
+      .then(user => setConnected(!!user.facebookConnected))
+      .catch(() => setConnected(false));
   }, []);
 
   const handleConnect = () => {
@@ -238,7 +230,6 @@ function IntegrationsTab({ profile }: { profile: UserProfile | null }) {
             <div>
               <p className="text-sm font-semibold text-white">Facebook</p>
               <p className="text-[11px] text-zinc-500">Meta Business Suite</p>
-              <p className="text-[9px] text-zinc-700 font-mono">{debugInfo}</p>
             </div>
           </div>
           {connected ? (
