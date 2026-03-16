@@ -276,9 +276,9 @@ function TrackingTab() {
         <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Domínio de Tracking</label>
         <input
           type="text"
-          disabled
-          placeholder="A definir"
-          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-zinc-500 placeholder:text-zinc-600 outline-none cursor-not-allowed"
+          readOnly
+          value="link.brazachat.shop"
+          className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none"
         />
       </div>
 
