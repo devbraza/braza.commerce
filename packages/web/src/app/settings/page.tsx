@@ -197,11 +197,11 @@ function IntegrationsTab({ profile }: { profile: UserProfile | null }) {
   const [disconnecting, setDisconnecting] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  // Check if Facebook is connected (user has facebookId)
+  // Check if Facebook is connected (user has active accessToken)
   useEffect(() => {
-    apiFetch<{ id: string; facebookId?: string | null }>('/auth/me')
+    apiFetch<{ id: string; facebookConnected?: boolean }>('/auth/me')
       .then(user => {
-        setConnected(!!user.facebookId);
+        setConnected(!!user.facebookConnected);
       })
       .catch(() => setConnected(false));
   }, []);

@@ -79,6 +79,7 @@ export class AuthService {
     email: string | null;
     name: string | null;
     facebookId: string | null;
+    accessToken: string | null;
     timezone: string;
     createdAt: Date;
   }): AuthResponseDto {
@@ -87,6 +88,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       facebookId: user.facebookId,
+      facebookConnected: !!user.accessToken,
       timezone: user.timezone,
       createdAt: user.createdAt,
     };
