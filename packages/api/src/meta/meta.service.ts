@@ -79,8 +79,10 @@ export class MetaService {
 
     const accessToken = this.crypto.decrypt(user.accessToken);
 
+    // metaId already includes "act_" prefix from Facebook API
+    const accountId = adAccount.metaId.startsWith('act_') ? adAccount.metaId : `act_${adAccount.metaId}`;
     const response = await fetch(
-      `${META_API_BASE}/act_${adAccount.metaId}/adspixels?fields=id,name&access_token=${accessToken}`,
+      `${META_API_BASE}/${accountId}/adspixels?fields=id,name&access_token=${accessToken}`,
     );
 
     if (!response.ok) {
