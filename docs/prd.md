@@ -14,6 +14,8 @@
 | 2026-03-15 | 0.8.0 | Adicionados FR20 (página Teste — UTMs + CAPI) e FR21 (template UTMs para Facebook Ads na aba Tracking). Módulo Teste adicionado à lista de telas (P1) | Morgan (PM) |
 | 2026-03-16 | 0.9.0 | Domínio atualizado de brazachat.com para brazachat.shop (registro real). Aba WhatsApp adicionada em Settings para configuração da WhatsApp Cloud API. Privacy URL e tracking domain definidos em produção | Morgan (PM) |
 | 2026-03-16 | 1.0.0 | **Migração WhatsApp Cloud API → Z-API.** Integração WhatsApp simplificada via Z-API (SaaS). Removida dependência direta da WhatsApp Cloud API, Meta Business Verification e webhook com validação HMAC. Settings > WhatsApp simplificado para Instance ID + Token + Client-Token. Webhook simplificado (JSON direto). Suporte a mídias (imagem, áudio, documento) adicionado ao MVP. Modelo SaaS multi-instância documentado para fase futura | Morgan (PM) |
+| 2026-03-16 | 1.5.0 | **Ad Costs: cron removido → sync manual.** FR22 atualizado: sincronização de custos agora é exclusivamente sob demanda (botão "Sincronizar Custos"). Cron diário e dependência node-cron removidos. Operador controla quando atualizar dados de custo. Campaign matching com proteção anti-double-link. Revenue query com fallback graceful | Morgan (PM) |
+| 2026-03-16 | 1.4.0 | **Facebook Ad Costs no Dashboard.** Nova Story 6.5: sincronização de custos de anúncio via Meta Marketing API (spend, CPC, CPM, impressions, reach por campanha). Dashboard enriquecido com KPIs de custo (Gasto Total, CPC, CPL, ROAS). Tabela AdCostSnapshot para histórico. Novos FRs: FR22 (sync custos), FR23 (métricas ROI no dashboard) | Morgan (PM) |
 | 2026-03-16 | 1.3.0 | **Click_id invisível.** Click_id na mensagem WhatsApp codificado em caracteres zero-width unicode — completamente invisível para o cliente. Decoder no webhook suporta formato legado (visível) e novo formato (zero-width) | Morgan (PM) |
 | 2026-03-16 | 1.2.0 | **Campanhas simplificadas + DELETE.** (1) Link e UTMs clicáveis (click-to-copy, sem campos editáveis). (2) Template UTMs padrão Facebook na criação e detalhe da campanha. (3) Checkbox de seleção + exclusão em massa de campanhas. (4) Endpoint `DELETE /campaigns/:id` adicionado. (5) Drawer de detalhe simplificado — removidos campos editáveis de UTMs | Morgan (PM) |
 | 2026-03-16 | 1.1.0 | **Deploy produção + v1 single-tenant operacional.** (1) Autenticação v1: OptionalAuthGuard em todos controllers — tenta JWT cookie, fallback para DEFAULT_USER_ID. Sem tela de login. (2) Facebook OAuth funcional: botão Conectar Facebook em Settings > Integrations redireciona para OAuth real, callback salva token e retorna para Settings. Cookie JWT com domain=.brazachat.shop para cross-subdomain. Scope `email` adicionado ao OAuth. (3) Página Teste CAPI atualizada: campo test_event_code do Facebook (cola do Events Manager), payload completo com client_ip, fbc, fbp, external_id (SHA-256), event_source_url. (4) Upload module: POST /upload/media para mídias na VPS filesystem (16MB max, path traversal protection). (5) Rate limiting: webhook 100 req/s por IP, mensagens 30/min por conversa, cleanup periódico. (6) Deploy: Backend Hetzner VPS (PM2 + Nginx + Let's Encrypt SSL), Frontend Vercel, banco PostgreSQL Hetzner | Morgan (PM) |
@@ -95,6 +97,10 @@ Empresas que vendem via WhatsApp a partir de anúncios Meta enfrentam um problem
 **UTM Template para Facebook Ads:**
 - **FR21:** A aba Settings > Tracking deve exibir um template de UTMs padrão pronto para o operador copiar e colar no campo "URL Parameters" do Facebook Ads Manager. Template: `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}` — com botão "Copiar" e instruções de uso
 
+**Custos de Anúncio & ROI:**
+- **FR22:** O sistema deve sincronizar dados de custo dos anúncios Facebook via Meta Marketing API (`GET /{adAccount.metaId}/insights`), incluindo: spend, impressions, reach, clicks, cpc, cpm — agrupados por campanha (`campaign_name`). Sincronização **sob demanda** via botão "Sincronizar Custos" no Dashboard (rate limit: 1 sync a cada 5 minutos por usuário, com cleanup automático de cooldowns expirados). ~~Cron automático removido — operador prefere controle manual em tempo real~~. Dados armazenados em tabela `AdCostSnapshot` (campos Float, consistente com schema) com granularidade diária por campanha. Matching em 2 níveis: (1) vínculo explícito via `Campaign.campaignMetaId`, (2) heurística por nome com proteção contra ambiguidade e deduplicação por campaign_id. Paginação da Meta API respeitada. Query de receita diária isolada com fallback graceful (dashboard não quebra se query falhar)
+- **FR23:** O Dashboard deve exibir métricas de custo e ROI calculadas a partir dos dados sincronizados: (1) KPI cards adicionais: Gasto Total (R$), CPC Médio (R$), CPL — Custo por Lead (R$), ROAS — Return on Ad Spend (receita ÷ gasto); (2) Coluna "Gasto" na tabela Top Campaigns; (3) Gráfico de linha adicional: Gasto por dia sobreposto com Receita por dia; (4) Todos os valores filtráveis pelo mesmo período do dashboard (today, 7d, 30d, custom)
+
 ### Non-Functional Requirements
 
 - **NFR1:** O redirecionamento do link de tracking para WhatsApp deve ocorrer em menos de 500ms. O lookup `trackingCode → campanha` deve ser cacheado em Redis (TTL 1h) para evitar query ao PostgreSQL em cada clique
@@ -169,7 +175,7 @@ O BrazaChat deve ter uma interface limpa, funcional e focada em produtividade. O
 | Tela | Propósito | Prioridade MVP |
 |------|-----------|----------------|
 | ~~Login (Facebook OAuth)~~ | ~~Autenticação via Meta~~ | Removido v1 — sem tela de login nesta versão |
-| Dashboard | Métricas gerais: leads, conversões, revenue | P0 |
+| Dashboard | Métricas gerais: leads, conversões, revenue, custos Facebook Ads, ROAS | P0 |
 | Campaigns | Criar/listar campanhas com links de tracking | P0 |
 | Products | CRUD de produtos com template de mensagem | P0 |
 | Inbox | Lista de conversas + chat + botões de evento | P0 |
@@ -247,7 +253,7 @@ Um único serviço NestJS com módulos bem separados:
 
 | API | Uso | Autenticação |
 |-----|-----|-------------|
-| Meta Marketing API | Listar Ad Accounts, Pixels, Campaigns | OAuth token do usuário |
+| Meta Marketing API | Listar Ad Accounts, Pixels, Campaigns, Insights (custos/spend) | OAuth token do usuário |
 | Meta Conversion API | Enviar eventos server-side | Access token + pixel_id |
 | Z-API | Receber/enviar mensagens WhatsApp via REST API + webhooks | Instance ID + Token + Client-Token (configuráveis em Settings > WhatsApp) |
 | Facebook Login | Autenticação OAuth | App ID + App Secret |
@@ -952,6 +958,62 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 7. Indicador de volume mínimo: insights com menos de 10 conversas mostram "Dados insuficientes"
 8. IA não responde aos clientes — apenas observa e reporta (FR17)
 9. Integração via OpenAI API (GPT-4o-mini) para análise de texto — API key configurável em Settings
+
+#### Story 6.5: Facebook Ad Costs — Sync & ROI Dashboard
+
+> As an **operator**,
+> I want to see how much I'm spending on Facebook Ads and my return on investment directly in the dashboard,
+> so that I can make data-driven decisions about where to invest my ad budget.
+
+**Acceptance Criteria:**
+
+1. Novo modelo Prisma `AdCostSnapshot`: id, adAccountId, campaignMetaId (ID da campanha no Meta), campaignName, date (Date, granularidade diária), spend (Decimal 10,2), impressions (Int), reach (Int), clicks (Int — cliques reportados pelo Meta), cpc (Decimal 10,4), cpm (Decimal 10,4), currency (default "BRL"), syncedAt, userId. Índice único: [adAccountId, campaignMetaId, date]
+2. Novo serviço `AdCostService` com método `syncCosts(userId, adAccountId, dateRange)`:
+   - Chama Meta Marketing API: `GET https://graph.facebook.com/v21.0/act_{ad_account_id}/insights?fields=campaign_id,campaign_name,spend,impressions,reach,clicks,cpc,cpm&level=campaign&time_range={since,until}&time_increment=1`
+   - Access token obtido da tabela `AdAccount` do usuário (descriptografado via `CryptoService`)
+   - Para cada dia/campanha retornado, cria ou atualiza registro em `AdCostSnapshot` (upsert por adAccountId + campaignMetaId + date)
+   - Rate limit: máximo 5 requests por batch, respeitando rate limits da Meta API (200 calls/hour/ad account)
+3. ~~Job cron removido~~ — sincronização é exclusivamente manual via botão "Sincronizar Custos" no Dashboard. Operador controla quando atualizar dados de custo em tempo real
+4. Endpoint `POST /dashboard/sync-costs` (OptionalAuthGuard) — **único mecanismo de sincronização**:
+   - Sincroniza custos de todas as ad accounts do usuário (últimos 3 dias por padrão, capturando atualizações retroativas da Meta)
+   - Rate limit: 1 sync a cada 5 minutos por usuário (in-memory com cleanup automático de entries expiradas)
+   - Retorna: { synced: number, errors: string[] }
+5. Endpoint `GET /dashboard/metrics` estendido com novos campos no response:
+   - `totalSpend`: soma do spend de todos os AdCostSnapshot no período filtrado
+   - `avgCpc`: média ponderada do CPC (totalSpend / totalClicks do Meta)
+   - `costPerLead`: totalSpend / totalLeads (leads do sistema)
+   - `roas`: totalRevenue / totalSpend (receita do sistema / gasto no Meta)
+   - `spendTimeSeries`: array de { date, spend } para gráfico de gasto diário
+   - `topCampaigns` estendido com campo `spend` por campanha
+6. Matching de campanhas Meta ↔ campanhas locais:
+   - Primary: campaignName do Meta (lowercase, trimmed) contém o `name` da campanha local (lowercase)
+   - Fallback: se não houver match, exibir dados do Meta com label "(não vinculada)" no dashboard
+   - Campanhas locais sem dados de custo exibem "—" na coluna de gasto
+7. Frontend — novos KPI cards no Dashboard (após os 4 existentes):
+   - **Gasto Total** (R$): ícone DollarSign (Lucide), cor zinc (neutro)
+   - **CPC Médio** (R$): ícone MousePointerClick, cor sky
+   - **CPL** (R$): ícone UserPlus, cor amber
+   - **ROAS** (x): ícone TrendingUp, cor emerald se > 1, red se < 1
+   - Cada KPI com variação percentual vs período anterior (mesmo padrão dos KPIs existentes)
+8. Frontend — gráfico "Gasto vs Receita":
+   - Gráfico de linha com 2 séries: Gasto (cor red/rose) e Receita (cor emerald) por dia
+   - Mesmo período do filtro do dashboard
+   - Tooltip mostrando valores de ambos + ROAS do dia
+9. Frontend — coluna "Gasto" adicionada na tabela "Top Campaigns":
+   - Coluna entre "Conversões" e "Taxa de Conversão"
+   - Formato: R$ X.XXX,XX
+   - Campanhas sem dados de custo: exibir "—"
+10. Frontend — botão "Sincronizar Custos" no header do Dashboard:
+    - Ícone RefreshCw (Lucide) + texto "Sincronizar Custos"
+    - Ao clicar, chama `POST /dashboard/sync-costs`
+    - Loading spinner durante sync
+    - Toast de sucesso: "Custos sincronizados: X registros atualizados"
+    - Toast de erro se falhar (ex: token expirado → sugerir reconectar Facebook)
+    - Desabilitado por 5 minutos após último sync (cooldown visual com countdown)
+11. Frontend — indicador de última sincronização:
+    - Texto discreto abaixo dos KPI cards de custo: "Última sync: há X minutos" ou "Custos não sincronizados" se nunca sincronizou
+    - Se dados têm mais de 24h, exibir warning amber: "Dados de custo desatualizados"
+12. Se usuário não tem Facebook conectado ou nenhuma Ad Account vinculada, seção de custos mostra estado vazio: "Conecte sua conta Facebook em Settings para ver custos de anúncio" com link para Settings > Integrations
 
 ---
 

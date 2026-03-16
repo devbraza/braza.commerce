@@ -20,5 +20,8 @@
   },
   "devDependencies": {
     "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "recharts": "^3.8.0"
   }
 }
