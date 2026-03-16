@@ -51,7 +51,7 @@ interface CreatedCampaign {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DOMAIN = 'link.brazachat.com';
+const DOMAIN = 'link.brazachat.shop';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

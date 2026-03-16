@@ -8,7 +8,7 @@ async function main() {
     update: {},
     create: {
       facebookId: 'test-fb-id-001',
-      email: 'test@brazachat.com',
+      email: 'test@brazachat.shop',
       name: 'Test User',
       timezone: 'America/Sao_Paulo',
     },

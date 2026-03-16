@@ -51,7 +51,7 @@ export default function PrivacyPage() {
           <p>
             Voce tem direito a solicitar acesso, correcao ou exclusao dos seus
             dados pessoais a qualquer momento, conforme previsto na LGPD.
-            Entre em contato pelo email: privacidade@brazachat.com
+            Entre em contato pelo email: privacidade@brazachat.shop
           </p>
         </div>
 

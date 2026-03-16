@@ -158,7 +158,7 @@ export class EventsService {
           event_time: Math.floor(event.createdAt.getTime() / 1000),
           event_id: event.eventId,
           action_source: 'website',
-          event_source_url: `https://link.brazachat.com/c/${event.lead.campaign.trackingCode}`,
+          event_source_url: `https://link.brazachat.shop/c/${event.lead.campaign.trackingCode}`,
           user_data: userData,
           custom_data: {
             value: event.value,
