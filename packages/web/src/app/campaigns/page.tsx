@@ -191,6 +191,8 @@ function TrackingLinkPanel({ campaign }: { campaign: CreatedCampaign }) {
 export default function CampaignsPage() {
   // List state
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
   const [loadingList, setLoadingList] = useState(true);
 
   // Form toggle
@@ -304,6 +306,37 @@ export default function CampaignsPage() {
   // Detail drawer
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [editingUtms, setEditingUtms] = useState<Record<string, string>>({});
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === campaigns.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(campaigns.map(c => c.id)));
+    }
+  };
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Excluir ${selectedIds.size} campanha(s)? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => apiFetch(`/campaigns/${id}`, { method: 'DELETE' })));
+      setCampaigns(prev => prev.filter(c => !selectedIds.has(c.id)));
+      setSelectedIds(new Set());
+    } catch {
+      // ignore
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const openDetail = (c: Campaign) => {
     setSelectedCampaign(c);
@@ -472,9 +505,25 @@ export default function CampaignsPage() {
           ))}
         </div>
       ) : (
+        <>
+        {selectedIds.size > 0 && (
+          <div className="mb-3 flex items-center gap-3">
+            <span className="text-sm text-zinc-400">{selectedIds.size} selecionada(s)</span>
+            <button
+              onClick={deleteSelected}
+              disabled={deleting}
+              className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/20 disabled:opacity-50"
+            >
+              {deleting ? 'Excluindo...' : 'Excluir selecionadas'}
+            </button>
+          </div>
+        )}
         <table className="w-full rounded-xl border border-white/[0.06] bg-[#111113]">
           <thead>
             <tr className="border-b border-white/[0.06] bg-white/[0.04] text-left text-sm text-zinc-500">
+              <th className="p-3 w-10">
+                <input type="checkbox" checked={campaigns.length > 0 && selectedIds.size === campaigns.length} onChange={toggleSelectAll} className="accent-indigo-500 cursor-pointer" />
+              </th>
               <th className="p-3">Nome</th>
               <th className="p-3">Produto</th>
               <th className="p-3">Ad Account</th>
@@ -491,10 +540,13 @@ export default function CampaignsPage() {
                   ? ((c._count.leads / c._count.clicks) * 100).toFixed(1)
                   : '0.0';
               return (
-                <tr key={c.id} className="border-b border-white/[0.06] hover:bg-white/[0.04] cursor-pointer" onClick={() => openDetail(c)}>
-                  <td className="p-3 font-medium">{c.name}</td>
-                  <td className="p-3">{c.product.name}</td>
-                  <td className="p-3">{c.adAccount.name}</td>
+                <tr key={c.id} className="border-b border-white/[0.06] hover:bg-white/[0.04] cursor-pointer">
+                  <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                    <input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleSelect(c.id)} className="accent-indigo-500 cursor-pointer" />
+                  </td>
+                  <td className="p-3 font-medium" onClick={() => openDetail(c)}>{c.name}</td>
+                  <td className="p-3" onClick={() => openDetail(c)}>{c.product.name}</td>
+                  <td className="p-3" onClick={() => openDetail(c)}>{c.adAccount.name}</td>
                   <td className="p-3">
                     <button
                       onClick={() => copyListLink(c)}
@@ -512,13 +564,14 @@ export default function CampaignsPage() {
             })}
             {campaigns.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-4 text-center text-zinc-500">
+                <td colSpan={8} className="p-4 text-center text-zinc-500">
                   Nenhuma campanha cadastrada
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        </>
       )}
       {/* Detail Drawer */}
       {selectedCampaign && (
