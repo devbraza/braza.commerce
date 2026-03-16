@@ -277,7 +277,7 @@ function TrackingTab() {
         <input
           type="text"
           readOnly
-          value="link.brazachat.shop"
+          value="https://link.brazachat.shop"
           className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none"
         />
       </div>
