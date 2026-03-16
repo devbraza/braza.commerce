@@ -134,4 +134,18 @@ export class CampaignsService {
 
     return this.prisma.campaign.update({ where: { id }, data });
   }
+
+  async remove(userId: string, id: string) {
+    const campaign = await this.prisma.campaign.findFirst({
+      where: { id, userId },
+      include: { _count: { select: { clicks: true, leads: true } } },
+    });
+    if (!campaign) throw new NotFoundException('Campaign not found');
+
+    // Delete related clicks first (cascade)
+    await this.prisma.click.deleteMany({ where: { campaignId: id } });
+    await this.prisma.campaign.delete({ where: { id } });
+
+    return { deleted: true };
+  }
 }

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -48,5 +49,11 @@ export class CampaignsController {
   update(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
     const user = req.user as { id: string };
     return this.campaignsService.update(user.id, id, dto);
+  }
+
+  @Delete(':id')
+  remove(@Req() req: Request, @Param('id') id: string) {
+    const user = req.user as { id: string };
+    return this.campaignsService.remove(user.id, id);
   }
 }
