@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Req,
@@ -98,6 +99,14 @@ export class WhatsappController {
     }
 
     return event;
+  }
+
+  // Delete conversation and its messages
+  @Delete('conversations/:id')
+  @UseGuards(OptionalAuthGuard)
+  async deleteConversation(@Req() req: Request, @Param('id') id: string) {
+    const user = req.user as { id: string };
+    return this.whatsappService.deleteConversation(user.id, id);
   }
 
   // Send message via Z-API

@@ -269,6 +269,21 @@ export class WhatsappService {
     return message;
   }
 
+  async deleteConversation(userId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findFirst({
+      where: { id: conversationId, userId },
+    });
+    if (!conversation) throw new Error('Conversation not found');
+
+    // Delete messages, events, orders linked to this conversation, then the conversation
+    await this.prisma.message.deleteMany({ where: { conversationId } });
+    await this.prisma.order.deleteMany({ where: { conversationId } });
+    await this.prisma.event.deleteMany({ where: { conversationId } });
+    await this.prisma.conversation.delete({ where: { id: conversationId } });
+
+    return { deleted: true };
+  }
+
   async getConversations(userId: string) {
     return this.prisma.conversation.findMany({
       where: { userId },

@@ -54,6 +54,8 @@ export default function InboxPage() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [firedEvents, setFiredEvents] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     apiFetch<ConversationItem[]>('/conversations')
@@ -61,6 +63,30 @@ export default function InboxPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Excluir ${selectedIds.size} conversa(s)? Mensagens serão apagadas.`)) return;
+    setDeleting(true);
+    try {
+      await Promise.all(Array.from(selectedIds).map(id => apiFetch(`/conversations/${id}`, { method: 'DELETE' })));
+      setConversations(prev => prev.filter(c => !selectedIds.has(c.id)));
+      if (selected && selectedIds.has(selected)) {
+        setSelected(null);
+        setMessages([]);
+      }
+      setSelectedIds(new Set());
+    } catch { /* ignore */ }
+    finally { setDeleting(false); }
+  };
 
   const selectedConv = conversations.find((c) => c.id === selected);
 
@@ -137,29 +163,46 @@ export default function InboxPage() {
     <div className="flex h-screen bg-[#09090b] text-[#fafafa]">
       {/* Conversation list — 30% width (FR9) */}
       <div className="w-[30%] min-w-[280px] overflow-y-auto border-r border-white/[0.06] bg-[#0c0c0e]">
-        <div className="border-b border-white/[0.06] p-4">
+        <div className="border-b border-white/[0.06] p-4 flex items-center justify-between">
           <h2 className="text-[15px] font-semibold text-white">Inbox</h2>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={deleteSelected}
+              disabled={deleting}
+              className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1 text-[11px] font-medium text-red-400 hover:bg-red-500/20 disabled:opacity-50"
+            >
+              {deleting ? '...' : `Excluir (${selectedIds.size})`}
+            </button>
+          )}
         </div>
         {conversations.map((c) => (
           <div
             key={c.id}
-            onClick={() => selectConversation(c.id)}
-            className={`cursor-pointer border-b border-white/[0.06] px-4 py-3 hover:bg-white/[0.04] ${
+            className={`flex items-center gap-2 cursor-pointer border-b border-white/[0.06] px-3 py-3 hover:bg-white/[0.04] ${
               selected === c.id ? 'bg-white/[0.08]' : ''
             }`}
           >
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] font-medium text-white">
-                {c.lead.name || c.lead.phone}
-                {c.lead.product && (
-                  <span className="ml-1.5 text-zinc-500">[{c.lead.product.name}]</span>
-                )}
-              </span>
-              {c.unreadCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-white">
-                  {c.unreadCount}
+            <input
+              type="checkbox"
+              checked={selectedIds.has(c.id)}
+              onChange={() => toggleSelect(c.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="accent-indigo-500 cursor-pointer flex-shrink-0"
+            />
+            <div className="flex-1 min-w-0" onClick={() => selectConversation(c.id)}>
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium text-white truncate">
+                  {c.lead.name || c.lead.phone}
+                  {c.lead.product && (
+                    <span className="ml-1.5 text-zinc-500">[{c.lead.product.name}]</span>
+                  )}
                 </span>
-              )}
+                {c.unreadCount > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-semibold text-white flex-shrink-0">
+                    {c.unreadCount}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
