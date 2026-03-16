@@ -22,14 +22,15 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  adAccounts    AdAccount[]
-  products      Product[]
-  campaigns     Campaign[]
-  leads         Lead[]
-  events        Event[]
-  orders        Order[]
-  aiInsights    AiInsight[]
-  conversations Conversation[]
+  adAccounts       AdAccount[]
+  products         Product[]
+  campaigns        Campaign[]
+  leads            Lead[]
+  events           Event[]
+  orders           Order[]
+  aiInsights       AiInsight[]
+  conversations    Conversation[]
+  adCostSnapshots  AdCostSnapshot[]
 }
 
 model AdAccount {
@@ -40,8 +41,9 @@ model AdAccount {
   userId   String
   user     User   @relation(fields: [userId], references: [id])
 
-  pixels    Pixel[]
-  campaigns Campaign[]
+  pixels           Pixel[]
+  campaigns        Campaign[]
+  adCostSnapshots  AdCostSnapshot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,6 +96,7 @@ model Campaign {
   adAccount     AdAccount @relation(fields: [adAccountId], references: [id])
   pixelId       String?
   pixel         Pixel?    @relation(fields: [pixelId], references: [id])
+  campaignMetaId String?
   adsetName     String?
   adName        String?
   creativeName  String?
@@ -271,4 +274,27 @@ model AiInsight {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model AdCostSnapshot {
+  id             String    @id @default(uuid())
+  adAccountId    String
+  campaignMetaId String
+  campaignName   String
+  date           DateTime  @db.Date
+  spend          Float     @default(0)
+  impressions    Int       @default(0)
+  reach          Int       @default(0)
+  clicks         Int       @default(0)
+  cpc            Float     @default(0)
+  cpm            Float     @default(0)
+  currency       String    @default("BRL")
+  syncedAt       DateTime  @default(now())
+  userId         String
+
+  adAccount      AdAccount @relation(fields: [adAccountId], references: [id])
+  user           User      @relation(fields: [userId], references: [id])
+
+  @@unique([adAccountId, campaignMetaId, date])
+  @@index([userId, date])
 }
