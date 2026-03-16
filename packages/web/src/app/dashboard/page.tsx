@@ -114,7 +114,7 @@ function ChangeBadge({ value }: { value?: number }) {
   const positive = value >= 0;
   const arrow = positive ? '▲' : '▼';
   const color = positive ? 'text-emerald-400' : 'text-red-400';
-  const abs = Math.abs(value).toFixed(1);
+  const abs = Math.abs(value ?? 0).toFixed(1);
 
   return (
     <p className={`mt-1 text-[11px] font-medium ${color}`}>
@@ -321,7 +321,7 @@ function DashboardContent() {
         { label: 'Leads', value: metrics.totalLeads, icon: Users, color: 'violet', change: metrics.changes?.leads },
         { label: 'Taxa de Conversão', value: metrics.conversionRate, icon: TrendingUp, color: 'emerald' },
         { label: 'Pedidos', value: metrics.totalOrders, icon: ShoppingCart, color: 'emerald', change: metrics.changes?.orders },
-        { label: 'Receita', value: formatCurrency(metrics.totalRevenue), icon: DollarSign, color: 'emerald', change: metrics.changes?.revenue },
+        { label: 'Receita', value: formatCurrency(metrics.totalRevenue ?? 0), icon: DollarSign, color: 'emerald', change: metrics.changes?.revenue },
         { label: 'Eventos', value: metrics.totalEvents, icon: Zap, color: 'indigo' },
         { label: 'Enviados ao Meta', value: metrics.eventsSentToMeta, icon: CheckCircle, color: 'indigo' },
       ]
@@ -332,12 +332,12 @@ function DashboardContent() {
 
   const costCards: KpiConfig[] = metrics && hasCostData
     ? [
-        { label: 'Gasto Total', value: formatCurrency(metrics.totalSpend), icon: DollarSign, color: 'zinc', change: metrics.changes?.spend },
-        { label: 'CPC Médio', value: formatCurrency(metrics.avgCpc), icon: MousePointerClick, color: 'sky' },
-        { label: 'CPL', value: formatCurrency(metrics.costPerLead), icon: UserPlus, color: 'amber' },
+        { label: 'Gasto Total', value: formatCurrency(metrics.totalSpend ?? 0), icon: DollarSign, color: 'zinc', change: metrics.changes?.spend },
+        { label: 'CPC Médio', value: formatCurrency(metrics.avgCpc ?? 0), icon: MousePointerClick, color: 'sky' },
+        { label: 'CPL', value: formatCurrency(metrics.costPerLead ?? 0), icon: UserPlus, color: 'amber' },
         {
           label: 'ROAS',
-          value: metrics.roas !== null ? `${metrics.roas.toFixed(2)}x` : '—',
+          value: metrics.roas != null ? `${Number(metrics.roas).toFixed(2)}x` : '—',
           icon: TrendingUp,
           color: metrics.roas !== null && metrics.roas >= 1 ? 'emerald' : 'red',
         },
