@@ -549,38 +549,38 @@ export default function CampaignsPage() {
               </div>
             </div>
 
-            {/* Links */}
-            <div className="mb-6 space-y-2">
-              <p className="text-xs text-zinc-500">Link Completo</p>
-              <div className="rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2">
-                <span className="font-mono text-xs text-indigo-300 break-all">{buildFullLink(selectedCampaign.trackingCode, editingUtms)}</span>
-              </div>
-              <p className="text-xs text-zinc-500 mt-2">Link Curto</p>
-              <div className="rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2">
-                <span className="font-mono text-xs text-indigo-300">{buildShortLink(selectedCampaign.trackingCode)}</span>
+            {/* Link da campanha — clica para copiar */}
+            <div className="mb-4">
+              <p className="mb-1 text-xs text-zinc-500">Link da Campanha (clique para copiar)</p>
+              <div
+                onClick={() => navigator.clipboard.writeText(buildShortLink(selectedCampaign.trackingCode))}
+                className="cursor-pointer rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2.5 transition hover:border-indigo-500/30 hover:bg-indigo-500/[0.04] active:scale-[0.99]"
+                title="Clique para copiar"
+              >
+                <span className="font-mono text-xs text-indigo-300 break-all">{buildShortLink(selectedCampaign.trackingCode)}</span>
               </div>
             </div>
 
-            {/* Inline-editable UTMs */}
-            <div className="mb-6">
-              <p className="text-xs text-zinc-500 mb-2">Parâmetros UTM (editáveis)</p>
-              <div className="space-y-2">
-                {['utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm'].map((key) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <label className="w-28 text-[11px] font-mono text-zinc-500">{key.replace('utm', 'utm_').replace(/([A-Z])/g, (m) => `_${m.toLowerCase()}`).replace('utm__', 'utm_')}</label>
-                    <input
-                      value={editingUtms[key] || ''}
-                      onChange={(e) => setEditingUtms({ ...editingUtms, [key]: e.target.value })}
-                      className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1.5 text-xs text-white outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={saveUtms}
-                className="mt-3 rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+            {/* UTMs padrao — clica para copiar */}
+            <div className="mb-4">
+              <p className="mb-1 text-xs text-zinc-500">UTMs para Facebook Ads (clique para copiar)</p>
+              <div
+                onClick={() => navigator.clipboard.writeText('utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}')}
+                className="cursor-pointer rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2.5 transition hover:border-emerald-500/30 hover:bg-emerald-500/[0.04] active:scale-[0.99]"
+                title="Clique para copiar"
               >
-                Salvar UTMs
+                <code className="font-mono text-[11px] text-emerald-300 break-all leading-relaxed">{'utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}'}</code>
+              </div>
+              <p className="mt-1 text-[10px] text-zinc-600">Cole no campo &quot;URL Parameters&quot; do Facebook Ads Manager</p>
+            </div>
+
+            {/* Testar link */}
+            <div className="mb-6">
+              <button
+                onClick={() => window.open(buildShortLink(selectedCampaign.trackingCode), '_blank', 'noopener,noreferrer')}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08] active:scale-95"
+              >
+                Testar Link ↗
               </button>
             </div>
           </div>
