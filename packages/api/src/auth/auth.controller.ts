@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -48,11 +48,23 @@ export class AuthController {
 
   @Get('me')
   async me(@Req() req: Request) {
-    // v1: try JWT first, fallback to DEFAULT_USER_ID
-    const jwtUser = req.user as { id: string } | undefined;
-    const userId = jwtUser?.id || process.env.DEFAULT_USER_ID;
+    // Try JWT cookie first, fallback to DEFAULT_USER_ID
+    let userId: string | undefined;
+    const token = req.cookies?.jwt;
+    if (token) {
+      try {
+        const secret = process.env.JWT_SECRET;
+        if (secret) {
+          const payload = jwt.verify(token, secret) as { id: string };
+          userId = payload.id;
+        }
+      } catch {
+        // Invalid token, ignore
+      }
+    }
+    userId = userId || process.env.DEFAULT_USER_ID;
     if (!userId) {
-      return { id: null, email: null, name: null, timezone: 'America/Sao_Paulo' };
+      return { id: null, email: null, name: null, facebookId: null, timezone: 'America/Sao_Paulo' };
     }
     return this.authService.getMe(userId);
   }
