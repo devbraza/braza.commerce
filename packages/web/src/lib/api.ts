@@ -4,28 +4,27 @@ export async function apiFetch<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
 
-  // v1: no login screen — skip redirect on 401
-  // TODO: re-enable when auth is implemented
-  // if (res.status === 401) {
-  //   if (typeof window !== 'undefined') {
-  //     window.location.href = '/login';
-  //   }
-  //   throw new Error('Unauthorized');
-  // }
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: 'Request failed' }));
+      throw new Error(error.message || `HTTP ${res.status}`);
+    }
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `HTTP ${res.status}`);
+    return res.json();
+  } catch (error) {
+    // In development, log the error
+    if (typeof window !== 'undefined') {
+      console.warn(`[apiFetch] ${path} failed:`, (error as Error).message);
+    }
+    throw error;
   }
-
-  return res.json();
 }

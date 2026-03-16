@@ -39,6 +39,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      domain: process.env.COOKIE_DOMAIN || undefined, // .brazachat.shop in production
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
