@@ -16,4 +16,4 @@ RUN cd packages/api && npx prisma generate && npx nest build
 
 EXPOSE 3001
 
-CMD ["node", "packages/api/dist/main.js"]
+CMD npx prisma db push --schema=packages/api/prisma/schema.prisma --skip-generate && node packages/api/dist/main.js
