@@ -39,6 +39,16 @@ export default function TestePage() {
     const eventTime = Math.floor(Date.now() / 1000);
     const eventId = `test_${Date.now()}`;
 
+    // SHA-256 hash helper
+    const sha256 = async (text: string) => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(text.toLowerCase().trim());
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    const phoneHash = capiPhone ? await sha256(capiPhone.replace(/[\s\-\(\)]/g, '')) : undefined;
+
     const payload = {
       data: [
         {
@@ -46,9 +56,14 @@ export default function TestePage() {
           event_time: eventTime,
           event_id: eventId,
           action_source: 'website',
+          event_source_url: 'https://link.brazachat.shop/c/test',
           user_data: {
-            ...(capiPhone && { ph: [capiPhone] }),
+            client_ip_address: '127.0.0.1',
             client_user_agent: navigator.userAgent,
+            ...(phoneHash && { ph: [phoneHash] }),
+            external_id: [await sha256(eventId)],
+            fbc: `fb.1.${Date.now()}.test_fbclid_123`,
+            fbp: `fb.1.${Date.now()}.${Math.floor(Math.random() * 9000000000) + 1000000000}`,
           },
           custom_data: {
             value: 1.00,
