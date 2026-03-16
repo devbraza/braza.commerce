@@ -14,6 +14,7 @@
 | 2026-03-15 | 0.8.0 | Adicionados FR20 (página Teste — UTMs + CAPI) e FR21 (template UTMs para Facebook Ads na aba Tracking). Módulo Teste adicionado à lista de telas (P1) | Morgan (PM) |
 | 2026-03-16 | 0.9.0 | Domínio atualizado de brazachat.com para brazachat.shop (registro real). Aba WhatsApp adicionada em Settings para configuração da WhatsApp Cloud API. Privacy URL e tracking domain definidos em produção | Morgan (PM) |
 | 2026-03-16 | 1.0.0 | **Migração WhatsApp Cloud API → Z-API.** Integração WhatsApp simplificada via Z-API (SaaS). Removida dependência direta da WhatsApp Cloud API, Meta Business Verification e webhook com validação HMAC. Settings > WhatsApp simplificado para Instance ID + Token + Client-Token. Webhook simplificado (JSON direto). Suporte a mídias (imagem, áudio, documento) adicionado ao MVP. Modelo SaaS multi-instância documentado para fase futura | Morgan (PM) |
+| 2026-03-16 | 1.2.0 | **Campanhas simplificadas + DELETE.** (1) Link e UTMs clicáveis (click-to-copy, sem campos editáveis). (2) Template UTMs padrão Facebook na criação e detalhe da campanha. (3) Checkbox de seleção + exclusão em massa de campanhas. (4) Endpoint `DELETE /campaigns/:id` adicionado. (5) Drawer de detalhe simplificado — removidos campos editáveis de UTMs | Morgan (PM) |
 | 2026-03-16 | 1.1.0 | **Deploy produção + v1 single-tenant operacional.** (1) Autenticação v1: OptionalAuthGuard em todos controllers — tenta JWT cookie, fallback para DEFAULT_USER_ID. Sem tela de login. (2) Facebook OAuth funcional: botão Conectar Facebook em Settings > Integrations redireciona para OAuth real, callback salva token e retorna para Settings. Cookie JWT com domain=.brazachat.shop para cross-subdomain. Scope `email` adicionado ao OAuth. (3) Página Teste CAPI atualizada: campo test_event_code do Facebook (cola do Events Manager), payload completo com client_ip, fbc, fbp, external_id (SHA-256), event_source_url. (4) Upload module: POST /upload/media para mídias na VPS filesystem (16MB max, path traversal protection). (5) Rate limiting: webhook 100 req/s por IP, mensagens 30/min por conversa, cleanup periódico. (6) Deploy: Backend Hetzner VPS (PM2 + Nginx + Let's Encrypt SSL), Frontend Vercel, banco PostgreSQL Hetzner | Morgan (PM) |
 
 ---
@@ -544,26 +545,24 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 
 **Acceptance Criteria:**
 
-1. Endpoints REST: `POST /campaigns`, `GET /campaigns`, `GET /campaigns/:id`, `PATCH /campaigns/:id`
-2. Campos: name, productId, adAccountId, pixelId (~~adsetName, adName, creativeName removidos v1~~ — dados passados via UTMs configuráveis em Settings > Tracking)
+1. Endpoints REST: `POST /campaigns`, `GET /campaigns`, `GET /campaigns/:id`, `PATCH /campaigns/:id`, `DELETE /campaigns/:id`
+2. Campos: name, productId, adAccountId, pixelId
 3. Dropdown de Ad Account carrega apenas contas do usuário autenticado
 4. Dropdown de Pixel filtra automaticamente pelos pixels da Ad Account selecionada (FR8)
 5. Dropdown de Product carrega produtos do usuário
-6. Ao criar campanha, gera automaticamente um `trackingCode` único (ex: `ABX92`, 5-6 chars alfanuméricos) e cacheia o mapeamento `trackingCode → campaignData` no Redis (TTL 1h) para performance do redirect
-7. ~~UTMs auto-gerados removidos v0.7.0~~ — UTMs são capturados diretamente da URL do clique vindo do Facebook (nomes reais de campanha, grupo de anúncio e criativo conforme configurados na Meta Ads)
+6. Ao criar campanha, gera automaticamente um `trackingCode` único (ex: `ABX92`, 5-6 chars alfanuméricos)
+7. UTMs são capturados diretamente da URL do clique vindo do Facebook (nomes reais de campanha, grupo de anúncio e criativo conforme configurados na Meta Ads). Template de UTMs padrão exibido para o operador copiar e colar no Facebook Ads Manager
 8. Após criação, exibir painel "Link de Campanha" com:
-   - Link completo montado: `https://{domain}/c/{trackingCode}?utm_source=...&utm_medium=...&utm_campaign=...&utm_content=...&utm_term=...`
-   - Tabela visual dos UTMs gerados (parâmetro | valor) para o operador conferir
-   - Botão "Copiar Link Completo" (copia URL inteira com UTMs para clipboard)
-   - Botão "Copiar Link Curto" (copia apenas `https://{domain}/c/{trackingCode}` sem UTMs — para uso em contextos visuais)
+   - Link da campanha clicável (clique para copiar): `https://link.brazachat.shop/c/{trackingCode}`
+   - Template UTMs padrão clicável (clique para copiar): `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}`
+   - Instrução: "Cole no campo URL Parameters do Facebook Ads Manager"
    - Preview da mensagem WhatsApp que o lead vai receber ao clicar
    - Botão "Testar Link" que abre o link numa nova aba para o operador verificar o redirect
-9. Tela "Campaigns" com listagem em tabela: nome, produto, ad account, link curto (com tooltip mostrando link completo com UTMs ao passar o mouse), total de cliques, taxa de conversão
-10. Na listagem, ícone de cópia rápida ao lado do link (copia link completo com UTMs)
-11. Detalhe da campanha (ao clicar): exibe painel completo com link, UTMs, métricas de cliques, e leads gerados
-12. UTM parameters editáveis individualmente no detalhe da campanha (campos inline-edit) — ao editar, o link é regenerado automaticamente
+9. Tela "Campaigns" com listagem em tabela: checkbox de seleção, nome, produto, ad account, link curto (clique para copiar), total de cliques, leads, taxa de conversão
+10. Checkbox individual por campanha + checkbox "selecionar todas" no header da tabela
+11. Botão "Excluir selecionadas" aparece quando há campanhas selecionadas — confirmação antes de deletar. Endpoint `DELETE /campaigns/:id` remove campanha e clicks relacionados
+12. Detalhe da campanha (drawer ao clicar): métricas (cliques, leads, conversão), link clicável para copiar, UTMs clicável para copiar, botão testar link
 13. Validação: todos os campos obrigatórios, pixelId deve pertencer ao adAccountId selecionado
-14. Slug dos UTMs: lowercase, espaços substituídos por hífens, sem caracteres especiais (ex: "Brain Caps V2" → `brain-caps-v2`)
 
 #### Story 2.3: Click Tracking & WhatsApp Redirect
 
