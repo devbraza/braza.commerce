@@ -13,10 +13,10 @@ import { Request } from 'express';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalAuthGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 

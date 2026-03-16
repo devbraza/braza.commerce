@@ -13,7 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { resolve } from 'path';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 import { UploadService } from './upload.service';
 
 const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB (WhatsApp limit)
@@ -31,7 +31,7 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('media')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalAuthGuard)
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: MAX_FILE_SIZE },
     fileFilter: (_req, file, cb) => {

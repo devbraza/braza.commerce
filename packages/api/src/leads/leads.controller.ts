@@ -1,10 +1,10 @@
 import { Controller, Get, Patch, Param, Query, Body, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { LeadsService } from './leads.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 
 @Controller('leads')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalAuthGuard)
 export class LeadsController {
   constructor(private readonly leadsService: LeadsService) {}
 

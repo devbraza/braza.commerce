@@ -13,7 +13,7 @@ import { Request, Response } from 'express';
 import { Logger } from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
 import { EventsService } from '../events/events.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 import { WebhookRateLimitGuard, MessageRateLimitGuard } from '../common/guards/rate-limit.guard';
 import { SendMessageDto } from './dto/send-message.dto';
 import { CreateConversationEventDto } from './dto/create-conversation-event.dto';
@@ -53,7 +53,7 @@ export class WhatsappController {
 
   // Conversations list
   @Get('conversations')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalAuthGuard)
   getConversations(@Req() req: Request) {
     const user = req.user as { id: string };
     return this.whatsappService.getConversations(user.id);
@@ -61,14 +61,14 @@ export class WhatsappController {
 
   // Messages in conversation
   @Get('conversations/:id/messages')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalAuthGuard)
   getMessages(@Req() req: Request, @Param('id') id: string) {
     const user = req.user as { id: string };
     return this.whatsappService.getMessages(user.id, id);
   }
 
   @Post('conversations/:id/events')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalAuthGuard)
   async createEvent(
     @Req() req: Request,
     @Param('id') conversationId: string,
@@ -102,7 +102,7 @@ export class WhatsappController {
 
   // Send message via Z-API
   @Post('conversations/:id/messages')
-  @UseGuards(JwtAuthGuard, MessageRateLimitGuard)
+  @UseGuards(OptionalAuthGuard, MessageRateLimitGuard)
   sendMessage(
     @Req() req: Request,
     @Param('id') id: string,

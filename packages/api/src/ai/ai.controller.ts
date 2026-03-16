@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { AiService } from './ai.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 
 @Controller('ai')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalAuthGuard)
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 

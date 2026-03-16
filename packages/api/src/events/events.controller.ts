@@ -2,10 +2,10 @@ import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/comm
 import { Request } from 'express';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 
 @Controller('events')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalAuthGuard)
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 

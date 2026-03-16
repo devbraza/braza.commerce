@@ -12,10 +12,10 @@ import {
 import { Request } from 'express';
 import { CampaignsService } from './campaigns.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalAuthGuard } from '../common/guards/optional-auth.guard';
 
 @Controller('campaigns')
-@UseGuards(JwtAuthGuard)
+@UseGuards(OptionalAuthGuard)
 export class CampaignsController {
   constructor(private readonly campaignsService: CampaignsService) {}
 
