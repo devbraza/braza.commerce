@@ -267,7 +267,7 @@ function IntegrationsTab() {
 }
 
 function TrackingTab() {
-  const [privacyUrl, setPrivacyUrl] = useState('');
+  const [privacyUrl, setPrivacyUrl] = useState('https://link.brazachat.shop/privacy');
 
   return (
     <div className="space-y-5">
