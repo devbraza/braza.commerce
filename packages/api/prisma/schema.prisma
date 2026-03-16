@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  facebookId   String?  @unique
+  email        String?
+  name         String?
+  accessToken  String?
+  refreshToken String?
+  timezone     String   @default("America/Sao_Paulo")
+  shippingData Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  adAccounts    AdAccount[]
+  products      Product[]
+  campaigns     Campaign[]
+  leads         Lead[]
+  events        Event[]
+  orders        Order[]
+  aiInsights    AiInsight[]
+  conversations Conversation[]
+}
+
+model AdAccount {
+  id       String @id @default(uuid())
+  metaId   String
+  name     String
+  status   String @default("active")
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  pixels    Pixel[]
+  campaigns Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Pixel {
+  id          String    @id @default(uuid())
+  metaId      String
+  name        String
+  adAccountId String
+  adAccount   AdAccount @relation(fields: [adAccountId], references: [id])
+
+  campaigns Campaign[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([adAccountId])
+}
+
+model Product {
+  id              String  @id @default(uuid())
+  name            String
+  price           Float
+  currency        String  @default("BRL")
+  whatsappPhone   String?
+  messageTemplate String?
+  userId          String
+  user            User    @relation(fields: [userId], references: [id])
+
+  campaigns Campaign[]
+  leads     Lead[]
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Campaign {
+  id            String    @id @default(uuid())
+  name          String
+  trackingCode  String    @unique
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  adAccountId   String
+  adAccount     AdAccount @relation(fields: [adAccountId], references: [id])
+  pixelId       String?
+  pixel         Pixel?    @relation(fields: [pixelId], references: [id])
+  adsetName     String?
+  adName        String?
+  creativeName  String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+
+  clicks Click[]
+  leads  Lead[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([trackingCode])
+}
+
+model Click {
+  id          String   @id @default(uuid())
+  clickId     String   @unique
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  fbclid      String?
+  fbc         String?
+  fbp         String?
+  ip          String?
+  userAgent   String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+
+  leads Lead[]
+
+  createdAt DateTime @default(now())
+
+  @@index([clickId])
+}
+
+model Lead {
+  id         String    @id @default(uuid())
+  phone      String
+  name       String?
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id])
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id])
+  clickId    String?
+  click      Click?    @relation(fields: [clickId], references: [id])
+  fbclid     String?
+  status     String    @default("new")
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+
+  conversations Conversation[]
+  events        Event[]
+  orders        Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([phone])
+}
+
+model Conversation {
+  id            String    @id @default(uuid())
+  leadId        String
+  lead          Lead      @relation(fields: [leadId], references: [id])
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  lastMessageAt DateTime?
+  unreadCount   Int       @default(0)
+
+  messages Message[]
+  events   Event[]
+  orders   Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([leadId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  content        String
+  type           String       @default("text")
+  direction      String
+  status         String       @default("sent")
+  whatsappMsgId  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+}
+
+model Event {
+  id             String        @id @default(uuid())
+  eventId        String        @unique
+  leadId         String
+  lead           Lead          @relation(fields: [leadId], references: [id])
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  type           String
+  value          Float?
+  currency       String        @default("BRL")
+  sentToMeta     Boolean       @default(false)
+  metaResponse   Json?
+  retryCount     Int           @default(0)
+  lastRetryAt    DateTime?
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([sentToMeta])
+  @@index([leadId])
+}
+
+model Order {
+  id             String        @id @default(uuid())
+  orderId        String        @unique
+  leadId         String
+  lead           Lead          @relation(fields: [leadId], references: [id])
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  productId      String?
+  product        Product?      @relation(fields: [productId], references: [id])
+  value          Float
+  currency       String        @default("BRL")
+  status         String        @default("pending")
+  street         String?
+  number         String?
+  complement     String?
+  neighborhood   String?
+  city           String?
+  state          String?
+  zipCode        String?
+  country        String        @default("BR")
+  trackingCode   String?
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AiInsight {
+  id         String @id @default(uuid())
+  type       String
+  data       Json
+  productId  String?
+  campaignId String?
+  confidence Float?
+  sampleSize Int?
+  userId     String
+  user       User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

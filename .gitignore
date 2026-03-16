@@ -16,6 +16,9 @@ dist/
 build/
 *.log
 logs/
+.next/
+coverage/
+tsconfig.tsbuildinfo
 
 # IDE & OS (AIOX)
 .DS_Store

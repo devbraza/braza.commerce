@@ -1,0 +1,24 @@
+{
+  "name": "brazachat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BrazaChat — WhatsApp-centric CRM for Meta Ads",
+  "workspaces": [
+    "packages/api",
+    "packages/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/api & npm run dev --workspace=packages/web",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
