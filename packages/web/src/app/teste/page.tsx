@@ -6,7 +6,7 @@ import { FlaskConical, ArrowRight, CheckCircle, XCircle, Copy } from 'lucide-rea
 export default function TestePage() {
   // UTM Test
   const [utmUrl, setUtmUrl] = useState(
-    'https://seudominio.com/c/ABX92?utm_source=fb&utm_medium=paid_social&utm_campaign=Brain+Caps&utm_content=Video+01&utm_term=Saude+25-45&fbclid=abc123xyz'
+    'https://link.brazachat.shop/c/ABX92?utm_source=fb&utm_medium=paid_social&utm_campaign=Brain+Caps&utm_content=Video+01&utm_term=Saude+25-45&fbclid=abc123xyz'
   );
   const [parsedUtms, setParsedUtms] = useState<Record<string, string> | null>(null);
 
