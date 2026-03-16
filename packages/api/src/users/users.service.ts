@@ -103,10 +103,10 @@ export class UsersService {
       }
     }
 
-    // Clear tokens but keep historical data
+    // Clear tokens and facebookId but keep historical data (campaigns, leads, etc)
     await this.prisma.user.update({
       where: { id: userId },
-      data: { accessToken: null, refreshToken: null },
+      data: { accessToken: null, refreshToken: null, facebookId: null },
     });
 
     return { disconnected: true };
