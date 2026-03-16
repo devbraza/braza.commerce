@@ -13,12 +13,14 @@ export async function apiFetch<T>(
     },
   });
 
-  if (res.status === 401) {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-    throw new Error('Unauthorized');
-  }
+  // v1: no login screen — skip redirect on 401
+  // TODO: re-enable when auth is implemented
+  // if (res.status === 401) {
+  //   if (typeof window !== 'undefined') {
+  //     window.location.href = '/login';
+  //   }
+  //   throw new Error('Unauthorized');
+  // }
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: 'Request failed' }));
