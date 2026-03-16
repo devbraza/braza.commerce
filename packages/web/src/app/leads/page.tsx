@@ -163,8 +163,8 @@ export default function LeadsPage() {
 
   // Load reference data once
   useEffect(() => {
-    apiFetch<Campaign[]>('/campaigns').then(setCampaigns).catch(() => {});
-    apiFetch<Product[]>('/products').then(setProducts).catch(() => {});
+    apiFetch<{ data: Campaign[] }>('/campaigns').then(r => setCampaigns(r.data || [])).catch(() => {});
+    apiFetch<{ data: Product[] }>('/products').then(r => setProducts(r.data || [])).catch(() => {});
   }, []);
 
   // Load leads when filters change

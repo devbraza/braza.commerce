@@ -243,7 +243,7 @@ export default function CampaignsPage() {
   // ── Load dropdowns when form opens ──
   useEffect(() => {
     if (!showForm) return;
-    apiFetch<Product[]>('/products').then(setProducts).catch(console.error);
+    apiFetch<{ data: Product[] }>('/products').then(r => setProducts(r.data || [])).catch(console.error);
     apiFetch<AdAccount[]>('/meta/ad-accounts').then(setAdAccounts).catch(console.error);
   }, [showForm]);
 
