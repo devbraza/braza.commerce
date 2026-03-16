@@ -173,6 +173,26 @@ function TrackingLinkPanel({ campaign }: { campaign: CreatedCampaign }) {
         </button>
       </div>
 
+      {/* UTM Template for Facebook Ads */}
+      <div className="mb-5">
+        <p className="mb-2 text-xs font-medium text-zinc-500">UTMs padrao — Cole em &quot;URL Parameters&quot; no Facebook Ads</p>
+        <div className="relative rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-3">
+          <code className="block break-all font-mono text-[11px] text-indigo-300 leading-relaxed select-all">
+            utm_source={'{{site_source_name}}'}&amp;utm_medium=paid_social&amp;utm_campaign={'{{campaign.name}}'}&amp;utm_content={'{{ad.name}}'}&amp;utm_term={'{{adset.name}}'}
+          </code>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText('utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}');
+            }}
+            className="absolute right-2 top-2 rounded-md bg-white/[0.08] px-2.5 py-1 text-[10px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white transition-colors"
+          >
+            Copiar
+          </button>
+        </div>
+        <p className="mt-1.5 text-[10px] text-zinc-600">Cole no campo &quot;URL Parameters&quot; do Facebook Ads Manager ao criar o anuncio. O Facebook substitui automaticamente pelos nomes reais.</p>
+      </div>
+
       {/* UTM table */}
       {utmRows.length > 0 && (
         <div>
