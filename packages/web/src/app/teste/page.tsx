@@ -15,6 +15,7 @@ export default function TestePage() {
   const [capiAccessToken, setCapiAccessToken] = useState('');
   const [capiEventName, setCapiEventName] = useState('ViewContent');
   const [capiPhone, setCapiPhone] = useState('');
+  const [capiTestCode, setCapiTestCode] = useState('');
   const [capiResult, setCapiResult] = useState<{ success: boolean; response: string } | null>(null);
   const [capiLoading, setCapiLoading] = useState(false);
 
@@ -71,7 +72,7 @@ export default function TestePage() {
           },
         },
       ],
-      test_event_code: 'TEST' + Math.floor(Math.random() * 90000 + 10000),
+      ...(capiTestCode && { test_event_code: capiTestCode }),
     };
 
     try {
@@ -211,6 +212,17 @@ export default function TestePage() {
                 className={inputClass}
               />
             </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11px] text-zinc-500">Test Event Code (copie do Events Manager do Facebook)</label>
+            <input
+              value={capiTestCode}
+              onChange={(e) => setCapiTestCode(e.target.value)}
+              placeholder="Ex: TEST58521 — deixe vazio para enviar como evento real"
+              className={inputClass}
+            />
+            <p className="mt-1 text-[10px] text-zinc-600">Encontre em: Events Manager → Pixel → Eventos de teste → Servidor → test_event_code</p>
           </div>
 
           <button
