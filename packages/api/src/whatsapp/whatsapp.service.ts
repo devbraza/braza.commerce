@@ -91,9 +91,34 @@ export class WhatsappService {
       fileName = msg.document.fileName || null;
     }
 
-    // Extract click_id from text message (format: ref:ck_XXXXXXX)
-    const clickIdMatch = content.match(/ref:(ck_[A-Za-z0-9]{7})/);
-    const clickId = clickIdMatch?.[1];
+    // Extract click_id — try visible format first, then zero-width encoded
+    let clickId: string | undefined;
+
+    // 1. Try visible format (legacy): ref:ck_XXXXXXX
+    const visibleMatch = content.match(/ref:(ck_[A-Za-z0-9]{7})/);
+    if (visibleMatch) {
+      clickId = visibleMatch[1];
+    } else {
+      // 2. Try zero-width encoded format: decode \u2060\u2060...\u2060\u2060 block
+      const zwDecode = (text: string): string | null => {
+        const markerStart = text.indexOf('\u2060\u2060');
+        if (markerStart === -1) return null;
+        const afterStart = markerStart + 2;
+        const markerEnd = text.indexOf('\u2060\u2060', afterStart);
+        if (markerEnd === -1) return null;
+        const encoded = text.substring(afterStart, markerEnd);
+        const chars = encoded.split('\u200D');
+        return chars.map(bits => {
+          const binary = bits.split('').map(b => b === '\u200B' ? '0' : '1').join('');
+          return String.fromCharCode(parseInt(binary, 2));
+        }).join('');
+      };
+      const decoded = zwDecode(content);
+      if (decoded) {
+        const match = decoded.match(/ref:(ck_[A-Za-z0-9]{7})/);
+        clickId = match?.[1];
+      }
+    }
 
     let leadData: Record<string, string | undefined> = {};
     if (clickId) {

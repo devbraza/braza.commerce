@@ -69,8 +69,17 @@ export class ClicksService {
     const phone = campaign.product?.whatsappPhone?.replace(/\+/g, '') || '';
     let message = campaign.product?.messageTemplate || '';
     message = message.replace('{product}', campaign.product?.name || '');
-    // Append click_id discretely
-    message += `\n\nref:${clickId}`;
+    // Encode click_id as invisible zero-width characters
+    // Each char is converted to 8-bit binary, 0=\u200B (zero-width space), 1=\u200C (zero-width non-joiner)
+    // Separator between chars: \u200D (zero-width joiner)
+    // Prefix marker: \u2060\u2060 (word joiner x2) to identify the encoded block
+    const zwEncode = (text: string) => {
+      return '\u2060\u2060' + text.split('').map(c => {
+        return c.charCodeAt(0).toString(2).padStart(8, '0')
+          .split('').map(b => b === '0' ? '\u200B' : '\u200C').join('');
+      }).join('\u200D') + '\u2060\u2060';
+    };
+    message += zwEncode(`ref:${clickId}`);
     const encoded = encodeURIComponent(message);
     return `https://wa.me/${phone}?text=${encoded}`;
   }
