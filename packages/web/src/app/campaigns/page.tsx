@@ -145,76 +145,40 @@ function TrackingLinkPanel({ campaign }: { campaign: CreatedCampaign }) {
         Link de Campanha
       </h3>
 
-      {/* Full link */}
-      <div className="mb-3">
-        <p className="mb-1 text-xs text-zinc-500">Link Completo (com UTMs)</p>
-        <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2">
-          <span className="flex-1 truncate font-mono text-xs text-indigo-300">{fullLink}</span>
-        </div>
-      </div>
-
-      {/* Short link */}
+      {/* Link da campanha — clica para copiar */}
       <div className="mb-4">
-        <p className="mb-1 text-xs text-zinc-500">Link Curto</p>
-        <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2">
-          <span className="flex-1 truncate font-mono text-xs text-indigo-300">{shortLink}</span>
+        <p className="mb-1 text-xs text-zinc-500">Link da Campanha (clique para copiar)</p>
+        <div
+          onClick={() => { navigator.clipboard.writeText(shortLink); }}
+          className="cursor-pointer rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2.5 transition hover:border-indigo-500/30 hover:bg-indigo-500/[0.04] active:scale-[0.99]"
+          title="Clique para copiar"
+        >
+          <span className="font-mono text-xs text-indigo-300 break-all">{shortLink}</span>
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="mb-5 flex flex-wrap gap-2">
-        <CopyButton text={fullLink} label="Copiar Link Completo" />
-        <CopyButton text={shortLink} label="Copiar Link Curto" />
+      {/* UTMs padrao — clica para copiar */}
+      <div className="mb-4">
+        <p className="mb-1 text-xs text-zinc-500">UTMs para Facebook Ads (clique para copiar)</p>
+        <div
+          onClick={() => { navigator.clipboard.writeText('utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}'); }}
+          className="cursor-pointer rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-2.5 transition hover:border-emerald-500/30 hover:bg-emerald-500/[0.04] active:scale-[0.99]"
+          title="Clique para copiar"
+        >
+          <code className="font-mono text-[11px] text-emerald-300 break-all leading-relaxed">utm_source={'{{site_source_name}}'}&utm_medium=paid_social&utm_campaign={'{{campaign.name}}'}&utm_content={'{{ad.name}}'}&utm_term={'{{adset.name}}'}</code>
+        </div>
+        <p className="mt-1 text-[10px] text-zinc-600">Cole no campo &quot;URL Parameters&quot; do Facebook Ads Manager</p>
+      </div>
+
+      {/* Testar link */}
+      <div className="mb-5">
         <button
-          onClick={() => window.open(fullLink, '_blank', 'noopener,noreferrer')}
+          onClick={() => window.open(shortLink, '_blank', 'noopener,noreferrer')}
           className="rounded-lg border border-white/[0.06] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white transition hover:bg-white/[0.08] active:scale-95"
         >
           Testar Link ↗
         </button>
       </div>
-
-      {/* UTM Template for Facebook Ads */}
-      <div className="mb-5">
-        <p className="mb-2 text-xs font-medium text-zinc-500">UTMs padrao — Cole em &quot;URL Parameters&quot; no Facebook Ads</p>
-        <div className="relative rounded-lg border border-white/[0.06] bg-[#09090b] px-3 py-3">
-          <code className="block break-all font-mono text-[11px] text-indigo-300 leading-relaxed select-all">
-            utm_source={'{{site_source_name}}'}&amp;utm_medium=paid_social&amp;utm_campaign={'{{campaign.name}}'}&amp;utm_content={'{{ad.name}}'}&amp;utm_term={'{{adset.name}}'}
-          </code>
-          <button
-            type="button"
-            onClick={() => {
-              navigator.clipboard.writeText('utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}');
-            }}
-            className="absolute right-2 top-2 rounded-md bg-white/[0.08] px-2.5 py-1 text-[10px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white transition-colors"
-          >
-            Copiar
-          </button>
-        </div>
-        <p className="mt-1.5 text-[10px] text-zinc-600">Cole no campo &quot;URL Parameters&quot; do Facebook Ads Manager ao criar o anuncio. O Facebook substitui automaticamente pelos nomes reais.</p>
-      </div>
-
-      {/* UTM table */}
-      {utmRows.length > 0 && (
-        <div>
-          <p className="mb-2 text-xs text-zinc-500">Parâmetros UTM</p>
-          <table className="w-full rounded-lg border border-white/[0.06] bg-[#09090b] text-sm">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="p-2 text-left text-xs text-zinc-500">Parâmetro</th>
-                <th className="p-2 text-left text-xs text-zinc-500">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {utmRows.map((r) => (
-                <tr key={r.param} className="border-b border-white/[0.06] last:border-0">
-                  <td className="p-2 font-mono text-xs text-zinc-400">{r.param}</td>
-                  <td className="p-2 font-mono text-xs text-white">{r.value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {/* WhatsApp Preview */}
       <WhatsAppPreview campaign={campaign} />
