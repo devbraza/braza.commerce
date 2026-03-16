@@ -16,7 +16,7 @@
     "typecheck": "npm run typecheck --workspaces"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "22.x"
   },
   "devDependencies": {
     "ts-node": "^10.9.2"
