@@ -14,6 +14,7 @@
 | 2026-03-15 | 0.8.0 | Adicionados FR20 (página Teste — UTMs + CAPI) e FR21 (template UTMs para Facebook Ads na aba Tracking). Módulo Teste adicionado à lista de telas (P1) | Morgan (PM) |
 | 2026-03-16 | 0.9.0 | Domínio atualizado de brazachat.com para brazachat.shop (registro real). Aba WhatsApp adicionada em Settings para configuração da WhatsApp Cloud API. Privacy URL e tracking domain definidos em produção | Morgan (PM) |
 | 2026-03-16 | 1.0.0 | **Migração WhatsApp Cloud API → Z-API.** Integração WhatsApp simplificada via Z-API (SaaS). Removida dependência direta da WhatsApp Cloud API, Meta Business Verification e webhook com validação HMAC. Settings > WhatsApp simplificado para Instance ID + Token + Client-Token. Webhook simplificado (JSON direto). Suporte a mídias (imagem, áudio, documento) adicionado ao MVP. Modelo SaaS multi-instância documentado para fase futura | Morgan (PM) |
+| 2026-03-16 | 1.1.0 | **Deploy produção + v1 single-tenant operacional.** (1) Autenticação v1: OptionalAuthGuard em todos controllers — tenta JWT cookie, fallback para DEFAULT_USER_ID. Sem tela de login. (2) Facebook OAuth funcional: botão Conectar Facebook em Settings > Integrations redireciona para OAuth real, callback salva token e retorna para Settings. Cookie JWT com domain=.brazachat.shop para cross-subdomain. Scope `email` adicionado ao OAuth. (3) Página Teste CAPI atualizada: campo test_event_code do Facebook (cola do Events Manager), payload completo com client_ip, fbc, fbp, external_id (SHA-256), event_source_url. (4) Upload module: POST /upload/media para mídias na VPS filesystem (16MB max, path traversal protection). (5) Rate limiting: webhook 100 req/s por IP, mensagens 30/min por conversa, cleanup periódico. (6) Deploy: Backend Hetzner VPS (PM2 + Nginx + Let's Encrypt SSL), Frontend Vercel, banco PostgreSQL Hetzner | Morgan (PM) |
 
 ---
 
@@ -87,7 +88,7 @@ Empresas que vendem via WhatsApp a partir de anúncios Meta enfrentam um problem
 - **FR19:** O sistema deve possuir os módulos: Dashboard, Campaigns, Inbox, Leads, Orders, Products, Ad Accounts, Pixels, Events, AI Insights, Teste, Settings
 
 **Teste de Integrações:**
-- **FR20:** O sistema deve possuir uma página "Teste" com duas funcionalidades: (1) Testar recebimento de UTMs — o operador cola uma URL e o sistema exibe uma tabela com cada parâmetro capturado (utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid) com indicador visual de sucesso/falha; (2) Testar envio de conversão (Meta CAPI) — o operador informa Pixel ID, Access Token, tipo de evento e telefone, e o sistema envia um evento de teste diretamente para a Meta Conversion API exibindo a resposta completa
+- **FR20:** O sistema deve possuir uma página "Teste" com duas funcionalidades: (1) Testar recebimento de UTMs — o operador cola uma URL (default: `https://link.brazachat.shop/c/ABX92?...`) e o sistema exibe uma tabela com cada parâmetro capturado (utm_source, utm_medium, utm_campaign, utm_content, utm_term, fbclid) com indicador visual de sucesso/falha; (2) Testar envio de conversão (Meta CAPI) — o operador informa Pixel ID, Access Token, tipo de evento, telefone (opcional) e **test_event_code** (copiado do Events Manager do Facebook), e o sistema envia um evento completo para a Meta Conversion API com payload obrigatório: client_ip_address, client_user_agent, fbc, fbp, external_id (SHA-256), event_source_url. Se test_event_code vazio, envia como evento real
 
 **UTM Template para Facebook Ads:**
 - **FR21:** A aba Settings > Tracking deve exibir um template de UTMs padrão pronto para o operador copiar e colar no campo "URL Parameters" do Facebook Ads Manager. Template: `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}` — com botão "Copiar" e instruções de uso
@@ -110,7 +111,10 @@ Empresas que vendem via WhatsApp a partir de anúncios Meta enfrentam um problem
 - **NFR14:** Todo frontend DEVE seguir o Braza Design System (`docs/braza-design-system.md`) — cores, tipografia, componentes, animações e ícones conforme documentado. Desvios visuais do padrão Braza são considerados bugs
 - **NFR15:** Conexões WebSocket (Socket.io) devem ser autenticadas via JWT no handshake. Cada socket é associado a um userId e só recebe eventos das suas próprias conversas. Conexões sem token válido são rejeitadas
 - **NFR15.1:** Credenciais Z-API (Instance ID, Token, Client-Token) devem ser criptografadas com AES-256-GCM via `CryptoService` antes de persistir no banco — mesmo tratamento dos tokens Meta
-- **NFR16:** O endpoint de webhook Z-API (`/webhook/z-api`) deve ter URL pública estável em produção: `https://api.brazachat.shop/webhook/z-api` (Railway). Em desenvolvimento, usar ngrok ou Cloudflare Tunnel. Rate limiter independente das rotas autenticadas. Webhook URL configurada na Z-API via API `PUT /update-webhook-received`
+- **NFR17:** Upload de mídias via `POST /upload/media` com limite de 16MB (limite WhatsApp). Arquivos salvos no filesystem da VPS em `/uploads/media/{userId}/{YYYY-MM-DD}/{uuid}.ext`. Endpoint de serve com proteção contra path traversal (validação de UUID, formato de data, e verificação de path dentro de uploadsDir)
+- **NFR18:** Rate limiting: webhook Z-API 100 req/s por IP (`WebhookRateLimitGuard`), envio de mensagens 30 msg/min por conversa (`MessageRateLimitGuard`). Ambos com cleanup periódico de entries expiradas (setInterval 60s) para evitar memory leak
+- **NFR19:** Autenticação v1 (single-tenant): `OptionalAuthGuard` em todos os controllers — parseia JWT cookie se disponível, fallback para `DEFAULT_USER_ID` env var. Nunca retorna 401. Quando auth multi-tenant for implementada, substituir por `JwtAuthGuard`
+- **NFR16:** O endpoint de webhook Z-API (`/webhook/z-api`) deve ter URL pública estável em produção: `https://api.brazachat.shop/webhook/z-api` (Hetzner VPS). Em desenvolvimento, usar ngrok ou Cloudflare Tunnel. Rate limiter independente (100 req/s por IP com cleanup periódico). Webhook URL registrada na Z-API automaticamente ao salvar credenciais e no startup do backend (OnModuleInit)
 
 ---
 
@@ -269,42 +273,39 @@ Um único serviço NestJS com módulos bem separados:
 └──────────────┬──────────────────────────────┘
                │ HTTPS (CORS configurado)
 ┌──────────────▼──────────────────────────────┐
-│  Railway / VPS (Backend)                    │
+│  Hetzner VPS (Backend + Database)           │
 │  - NestJS 11 (API + WebSocket + Workers)    │
 │  - Domínio: api.brazachat.shop              │
-│  - Redis (addon ou container sidecar)       │
-│  - BullMQ workers (mesmo processo)          │
-│  - Socket.io Gateway (auth JWT no handshake)│
-│  - Webhook endpoint: /webhooks/whatsapp     │
-└──────────────┬──────────────────────────────┘
-               │
-┌──────────────▼──────────────────────────────┐
-│  Supabase (Database)                        │
-│  - PostgreSQL managed                       │
-│  - Connection pooling (Supavisor)           │
-│  - Prisma conecta via pooled connection     │
+│  - PM2 process manager                      │
+│  - Nginx reverse proxy + Let's Encrypt SSL  │
+│  - PostgreSQL local                         │
+│  - Prisma ORM (prisma db push)              │
+│  - Webhook endpoint: /webhook/z-api         │
+│  - Upload files: /uploads/media/ (VPS disk) │
+│  - Node.js 22.x                             │
+│  - OptionalAuthGuard (JWT + DEFAULT_USER_ID)│
 └─────────────────────────────────────────────┘
 
-Domínios (3 — todos com SSL):
+Domínios (3 — todos com SSL Let's Encrypt):
   app.brazachat.shop   → Frontend (Vercel)
-  api.brazachat.shop   → Backend API + WebSocket (Railway)
+  api.brazachat.shop   → Backend API + WebSocket (Hetzner)
   link.brazachat.shop  → Tracking redirect (mesmo backend,
-                          rota /c/:code com cache Redis)
+                          rota /c/:code)
 ```
 
 ### Additional Technical Assumptions
 
-- **Domínio de tracking:** `link.brazachat.shop` registrado e configurado com SSL válido. Este domínio aponta para o mesmo backend (Railway) e a rota `/c/:code` usa cache Redis para garantir < 500ms
+- **Domínio de tracking:** `link.brazachat.shop` registrado e configurado com SSL válido. Este domínio aponta para o mesmo backend (Hetzner VPS) e a rota `/c/:code` usa cache Redis para garantir < 500ms
 - **Webhook Z-API (dev):** Usar ngrok ou Cloudflare Tunnel para expor localhost. Registrar URL via API Z-API `PUT /update-webhook-received`
 - **Webhook Z-API (prod):** URL fixa em `https://api.brazachat.shop/webhook/z-api` — registrada automaticamente na Z-API ao salvar credenciais em Settings > WhatsApp
-- Database hosting: Supabase (PostgreSQL managed) com connection pooling
+- Database hosting: PostgreSQL local na Hetzner VPS (Prisma ORM, `prisma db push` para migrations)
 - WhatsApp: Z-API (SaaS) — REST API para envio/recebimento de mensagens. Sem dependência direta da WhatsApp Cloud API
 - Rate limiting: endpoint de tracking (100 req/s por IP) e webhook (rate limiter independente)
 - CORS: `app.brazachat.shop` autorizado a acessar `api.brazachat.shop`
 - Logging: Pino para logs estruturados desde Epic 1 (mais performante que Winston para NestJS)
 - Error tracking: Sentry para capturar erros em produção
 - **Criptografia:** CryptoService com AES-256-GCM para tokens Meta. Chave via `ENCRYPTION_KEY` env var
-- **Multi-tenant:** TenantGuard (NestJS Guard) injeta userId em toda request autenticada. Prisma middleware filtra automaticamente por userId
+- **Autenticação v1:** OptionalAuthGuard (JWT cookie + DEFAULT_USER_ID fallback). Quando multi-tenant for implementado, substituir por JwtAuthGuard obrigatório
 
 ---
 
@@ -475,25 +476,25 @@ As seguintes features **não** fazem parte do MVP e serão consideradas para ver
 
 #### Story 1.4: Facebook OAuth Authentication
 
-> **⚠️ NOTA v1:** Tela de login removida desta versão. O fluxo OAuth e a autenticação backend permanecem implementados para integração com Meta API, mas não há tela de login no frontend nesta primeira versão. O sistema opera com acesso direto (sem autenticação de usuário).
+> **⚠️ NOTA v1:** Sem tela de login dedicada. O sistema opera com `OptionalAuthGuard` — tenta JWT cookie primeiro (setado pelo OAuth), fallback para `DEFAULT_USER_ID` (single-tenant). Botão "Conectar Facebook" está em Settings > Integrations.
 
 > As a **user**,
-> I want the backend to support Facebook OAuth for Meta API integration,
-> so that the system can connect to ad accounts and use the Conversion API.
+> I want to connect my Facebook account to the system via OAuth,
+> so that the system can access my ad accounts, pixels, and use the Conversion API.
 
 **Acceptance Criteria:**
 
-1. ~~Botão "Conectar com Facebook" na tela de login do frontend~~ — Removido v1
-2. Fluxo OAuth backend implementado: callback → criação de sessão JWT (para uso futuro)
-3. Permissões solicitadas: `ads_management`, `ads_read`, `business_management` (WhatsApp gerenciado via Z-API, sem necessidade de permissão Meta)
-4. Ao logar pela primeira vez, cria registro `User` com facebookId, email e name
-5. Ao logar novamente, atualiza accessToken e refreshToken do usuário existente
+1. Botão "Conectar Facebook" em Settings > Integrations redireciona para `{API_URL}/auth/facebook` (fluxo OAuth real)
+2. Fluxo OAuth backend: Facebook → callback → salva tokens → seta JWT cookie (httpOnly, secure, domain=.brazachat.shop, 7 dias) → redireciona para `/settings?tab=integrations`
+3. Permissões solicitadas: `email`, `ads_management`, `ads_read`, `business_management` (WhatsApp gerenciado via Z-API, sem necessidade de permissão Meta)
+4. Ao conectar pela primeira vez, cria registro `User` com facebookId, email e name
+5. Ao reconectar, atualiza accessToken e refreshToken do usuário existente (encontra pelo facebookId)
 6. AccessToken e refreshToken criptografados com `CryptoService` (AES-256-GCM) antes de persistir no banco — nunca armazenados em plaintext
-7. Token JWT armazenado em httpOnly cookie com expiração de 7 dias (para uso futuro)
-8. Endpoint `GET /auth/me` retorna dados do usuário autenticado (sem expor tokens Meta)
-9. Rotas protegidas passam pelo `TenantGuard` que valida JWT e injeta userId no request — retornam 401 se inválido ou expirado
-10. ~~Frontend redireciona para `/dashboard` após login bem-sucedido~~ — Removido v1
-11. ~~Frontend redireciona para `/login` se acessar rota protegida sem autenticação~~ — Removido v1
+7. Token JWT em httpOnly cookie com domain=`.brazachat.shop` (compartilhado entre api. e app. subdomínios), expiração 7 dias
+8. Endpoint `GET /auth/me` retorna dados do usuário: id, name, email, facebookId, facebookConnected (boolean baseado em accessToken), timezone. Parseia JWT cookie se disponível, fallback para DEFAULT_USER_ID
+9. Rotas protegidas usam `OptionalAuthGuard` — tenta JWT, fallback para DEFAULT_USER_ID. Nunca retorna 401 na v1
+10. Settings > Integrations mostra status Conectado/Desconectado, nome e email do Facebook, permissões ativas
+11. Botão "Desconectar Facebook" chama `POST /users/facebook/disconnect` — revoga token na Meta API, limpa accessToken/refreshToken do banco, mantém facebookId e dados históricos
 
 #### Story 1.5: Ad Accounts & Pixels — Meta API Integration
 
