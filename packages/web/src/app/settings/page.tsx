@@ -10,11 +10,12 @@ interface UserProfile {
   timezone: string;
 }
 
-type TabId = 'profile' | 'integrations' | 'tracking' | 'shipping';
+type TabId = 'profile' | 'integrations' | 'whatsapp' | 'tracking' | 'shipping';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'integrations', label: 'Integrations' },
+  { id: 'whatsapp', label: 'WhatsApp' },
   { id: 'tracking', label: 'Tracking' },
   { id: 'shipping', label: 'Shipping' },
 ];
@@ -261,13 +262,20 @@ function IntegrationsTab() {
         </button>
       )}
 
-      {/* WhatsApp Cloud API */}
+      <SaveButton />
+    </div>
+  );
+}
+
+function WhatsAppTab() {
+  return (
+    <div className="space-y-5">
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-bold select-none">W</div>
           <div>
             <p className="text-sm font-semibold text-white">WhatsApp Cloud API</p>
-            <p className="text-[11px] text-zinc-500">Receber e enviar mensagens</p>
+            <p className="text-[11px] text-zinc-500">Conecte seu número para receber e enviar mensagens</p>
           </div>
         </div>
 
@@ -281,22 +289,29 @@ function IntegrationsTab() {
             <input type="text" placeholder="ID do número de telefone" className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/[0.16]" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Webhook URL</label>
-            <div className="flex items-center gap-2">
-              <input type="text" readOnly value="https://api.brazachat.shop/webhook/whatsapp" className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none" />
-              <button type="button" onClick={() => navigator.clipboard.writeText('https://api.brazachat.shop/webhook/whatsapp')} className="rounded-lg bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white">Copiar</button>
-            </div>
-            <p className="text-[10px] text-zinc-500">Cole essa URL no campo Webhook do Meta Developers</p>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Verify Token</label>
-            <div className="flex items-center gap-2">
-              <input type="text" readOnly value="brazachat-webhook-2026" className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none" />
-              <button type="button" onClick={() => navigator.clipboard.writeText('brazachat-webhook-2026')} className="rounded-lg bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white">Copiar</button>
-            </div>
-            <p className="text-[10px] text-zinc-500">Cole esse token no campo Verify Token do Meta Developers</p>
+            <label className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Facebook App Secret</label>
+            <input type="password" placeholder="App Secret do Meta Developers" className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-white/[0.16]" />
           </div>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-3">
+        <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Configuração do Webhook no Meta Developers</p>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] text-zinc-500">Webhook URL</label>
+          <div className="flex items-center gap-2">
+            <input type="text" readOnly value="https://api.brazachat.shop/webhook/whatsapp" className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none" />
+            <button type="button" onClick={() => navigator.clipboard.writeText('https://api.brazachat.shop/webhook/whatsapp')} className="rounded-lg bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white">Copiar</button>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] text-zinc-500">Verify Token</label>
+          <div className="flex items-center gap-2">
+            <input type="text" readOnly value="brazachat-webhook-2026" className="flex-1 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white outline-none" />
+            <button type="button" onClick={() => navigator.clipboard.writeText('brazachat-webhook-2026')} className="rounded-lg bg-white/[0.08] px-3 py-2 text-[11px] font-semibold text-zinc-400 hover:bg-white/[0.12] hover:text-white">Copiar</button>
+          </div>
+        </div>
+        <p className="text-[10px] text-zinc-500">Cole a URL e o token no painel do Meta Developers → WhatsApp → Configuration → Webhook</p>
       </div>
 
       <SaveButton />
@@ -488,6 +503,7 @@ export default function SettingsPage() {
       <div className="max-w-lg rounded-xl border border-white/[0.06] bg-[#111113] p-6">
         {activeTab === 'profile' && <ProfileTab profile={profile} />}
         {activeTab === 'integrations' && <IntegrationsTab />}
+        {activeTab === 'whatsapp' && <WhatsAppTab />}
         {activeTab === 'tracking' && <TrackingTab />}
         {activeTab === 'shipping' && <ShippingTab />}
       </div>
