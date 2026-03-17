@@ -28,13 +28,13 @@ interface Product {
 interface AdAccount {
   id: string;
   name: string;
-  accountId: string;
+  metaId: string;
 }
 
 interface Pixel {
   id: string;
   name: string;
-  pixelId: string;
+  metaId: string;
 }
 
 interface CreatedCampaign {
@@ -464,7 +464,7 @@ export default function CampaignsPage() {
                   </option>
                   {pixels.map((px) => (
                     <option key={px.id} value={px.id} className="bg-[#111113]">
-                      {px.name} ({px.pixelId})
+                      {px.name} ({px.metaId})
                     </option>
                   ))}
                 </select>
