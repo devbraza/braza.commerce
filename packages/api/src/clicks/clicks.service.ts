@@ -56,20 +56,6 @@ export class ClicksService {
     return { click, redirectUrl };
   }
 
-  async getRedirectUrl(trackingCode: string): Promise<string | null> {
-    const campaign = await this.campaigns.findByTrackingCode(trackingCode);
-    if (!campaign) return null;
-
-    // Get the most recent click for this campaign to get the clickId
-    const lastClick = await this.prisma.click.findFirst({
-      where: { campaignId: campaign.id },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const clickId = lastClick?.clickId || 'unknown';
-    return this.buildWhatsAppUrl(campaign, clickId);
-  }
-
   private buildWhatsAppUrl(
     campaign: {
       product: {
