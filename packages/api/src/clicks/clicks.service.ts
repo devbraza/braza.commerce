@@ -52,8 +52,22 @@ export class ClicksService {
       },
     });
 
-    const whatsappUrl = this.buildWhatsAppUrl(campaign, clickId);
-    return { click, redirectUrl: whatsappUrl };
+    const redirectUrl = this.buildWhatsAppUrl(campaign, clickId);
+    return { click, redirectUrl };
+  }
+
+  async getRedirectUrl(trackingCode: string): Promise<string | null> {
+    const campaign = await this.campaigns.findByTrackingCode(trackingCode);
+    if (!campaign) return null;
+
+    // Get the most recent click for this campaign to get the clickId
+    const lastClick = await this.prisma.click.findFirst({
+      where: { campaignId: campaign.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const clickId = lastClick?.clickId || 'unknown';
+    return this.buildWhatsAppUrl(campaign, clickId);
   }
 
   private buildWhatsAppUrl(
@@ -70,9 +84,6 @@ export class ClicksService {
     let message = campaign.product?.messageTemplate || '';
     message = message.replace('{product}', campaign.product?.name || '');
     // Encode click_id as invisible zero-width characters
-    // Each char is converted to 8-bit binary, 0=\u200B (zero-width space), 1=\u200C (zero-width non-joiner)
-    // Separator between chars: \u200D (zero-width joiner)
-    // Prefix marker: \u2060\u2060 (word joiner x2) to identify the encoded block
     const zwEncode = (text: string) => {
       return '\u2060\u2060' + text.split('').map(c => {
         return c.charCodeAt(0).toString(2).padStart(8, '0')
