@@ -64,6 +64,7 @@ model Pixel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([metaId, adAccountId])
   @@index([adAccountId])
 }
 

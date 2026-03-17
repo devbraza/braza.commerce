@@ -97,24 +97,17 @@ export class MetaService {
     const pixels = data.data || [];
 
     for (const pixel of pixels) {
-      const existing = await this.prisma.pixel.findFirst({
-        where: { metaId: pixel.id, adAccountId },
+      await this.prisma.pixel.upsert({
+        where: {
+          metaId_adAccountId: { metaId: pixel.id, adAccountId },
+        },
+        update: { name: pixel.name },
+        create: {
+          metaId: pixel.id,
+          name: pixel.name,
+          adAccountId,
+        },
       });
-
-      if (existing) {
-        await this.prisma.pixel.update({
-          where: { id: existing.id },
-          data: { name: pixel.name },
-        });
-      } else {
-        await this.prisma.pixel.create({
-          data: {
-            metaId: pixel.id,
-            name: pixel.name,
-            adAccountId,
-          },
-        });
-      }
     }
 
     return this.prisma.pixel.findMany({ where: { adAccountId } });
