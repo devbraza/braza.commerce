@@ -42,7 +42,7 @@ export class MetaService {
     for (const account of accounts) {
       await this.prisma.adAccount.upsert({
         where: {
-          id: await this.findAdAccountId(account.id, userId),
+          metaId_userId: { metaId: account.id, userId },
         },
         update: {
           name: account.name,
@@ -97,39 +97,26 @@ export class MetaService {
     const pixels = data.data || [];
 
     for (const pixel of pixels) {
-      await this.prisma.pixel.upsert({
-        where: {
-          id: await this.findPixelId(pixel.id, adAccountId),
-        },
-        update: { name: pixel.name },
-        create: {
-          metaId: pixel.id,
-          name: pixel.name,
-          adAccountId,
-        },
+      const existing = await this.prisma.pixel.findFirst({
+        where: { metaId: pixel.id, adAccountId },
       });
+
+      if (existing) {
+        await this.prisma.pixel.update({
+          where: { id: existing.id },
+          data: { name: pixel.name },
+        });
+      } else {
+        await this.prisma.pixel.create({
+          data: {
+            metaId: pixel.id,
+            name: pixel.name,
+            adAccountId,
+          },
+        });
+      }
     }
 
     return this.prisma.pixel.findMany({ where: { adAccountId } });
-  }
-
-  private async findAdAccountId(
-    metaId: string,
-    userId: string,
-  ): Promise<string> {
-    const existing = await this.prisma.adAccount.findFirst({
-      where: { metaId, userId },
-    });
-    return existing?.id || 'non-existing-id';
-  }
-
-  private async findPixelId(
-    metaId: string,
-    adAccountId: string,
-  ): Promise<string> {
-    const existing = await this.prisma.pixel.findFirst({
-      where: { metaId, adAccountId },
-    });
-    return existing?.id || 'non-existing-id';
   }
 }

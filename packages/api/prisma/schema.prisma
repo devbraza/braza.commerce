@@ -48,6 +48,7 @@ model AdAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([metaId, userId])
   @@index([userId])
 }
 
