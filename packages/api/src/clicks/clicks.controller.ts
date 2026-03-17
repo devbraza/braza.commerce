@@ -23,21 +23,6 @@ export class ClicksController {
       userAgent,
     );
 
-    // Clean white page with transparent JS redirect.
-    // Same content for Facebook crawler and real users (no cloaking).
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.send(`<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Redirecionando</title>
-<style>body{margin:0;background:#fff}</style>
-</head>
-<body>
-<script>window.location.href="${redirectUrl.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}";</script>
-<noscript><meta http-equiv="refresh" content="0;url=${redirectUrl}"></noscript>
-</body>
-</html>`);
+    res.redirect(302, redirectUrl);
   }
 }

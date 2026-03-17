@@ -78,6 +78,6 @@ export class ClicksService {
     };
     message += zwEncode(`ref:${clickId}`);
     const encoded = encodeURIComponent(message);
-    return `https://wa.me/${phone}?text=${encoded}`;
+    return `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`;
   }
 }
