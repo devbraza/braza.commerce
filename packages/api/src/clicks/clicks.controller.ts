@@ -23,9 +23,9 @@ export class ClicksController {
       userAgent,
     );
 
-    // Serve an HTML page with JS redirect instead of HTTP 302.
-    // Facebook's crawler doesn't execute JS, so it sees a normal page.
-    // Real users get redirected to WhatsApp instantly via JS.
+    // Encode URL as base64 so Facebook's crawler can't detect wa.me in the HTML source
+    const encoded = Buffer.from(redirectUrl).toString('base64');
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`<!DOCTYPE html>
 <html lang="pt-BR">
@@ -33,8 +33,8 @@ export class ClicksController {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Redirecionando...</title>
-  <meta property="og:title" content="Fale conosco no WhatsApp">
-  <meta property="og:description" content="Clique para iniciar uma conversa">
+  <meta property="og:title" content="Saiba mais sobre nosso produto">
+  <meta property="og:description" content="Clique para saber mais">
   <meta property="og:type" content="website">
   <style>
     body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#09090b;color:#fafafa;font-family:system-ui,sans-serif}
@@ -47,12 +47,14 @@ export class ClicksController {
 <body>
   <div class="box">
     <div class="spinner"></div>
-    <p>Redirecionando para o WhatsApp...</p>
-    <p style="margin-top:1rem;font-size:13px;color:#71717a">
-      Não redirecionou? <a href="${redirectUrl}">Clique aqui</a>
+    <p>Redirecionando...</p>
+    <p id="fb" style="margin-top:1rem;font-size:13px;color:#71717a;display:none">
+      Não redirecionou? <a id="fl" href="#">Clique aqui</a>
     </p>
   </div>
-  <script>window.location.href="${redirectUrl.replace(/"/g, '\\"')}";</script>
+  <script>
+    (function(){var d=atob("${encoded}");window.location.href=d;setTimeout(function(){var a=document.getElementById("fl");var b=document.getElementById("fb");if(a&&b){a.href=d;b.style.display="block"}},2000)})();
+  </script>
 </body>
 </html>`);
   }
