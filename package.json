@@ -1,8 +1,8 @@
 {
-  "name": "brazachat",
-  "version": "0.1.0",
+  "name": "brazacommerce",
+  "version": "1.0.0",
   "private": true,
-  "description": "BrazaChat — WhatsApp-centric CRM for Meta Ads",
+  "description": "braza.commerce — AI-powered product page builder for e-commerce",
   "workspaces": [
     "packages/api",
     "packages/web",
@@ -22,6 +22,5 @@
     "ts-node": "^10.9.2"
   },
   "dependencies": {
-    "recharts": "^3.8.0"
   }
 }

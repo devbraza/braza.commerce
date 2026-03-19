@@ -28,3 +28,16 @@ export async function apiFetch<T>(
     throw error;
   }
 }
+
+export async function apiUpload<T>(path: string, body: FormData): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: 'POST',
+    body,
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Upload failed' }));
+    throw new Error(error.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}

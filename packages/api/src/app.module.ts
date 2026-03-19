@@ -1,20 +1,11 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { HealthModule } from './health/health.module';
-import { AuthModule } from './auth/auth.module';
-import { MetaModule } from './meta/meta.module';
-import { ProductsModule } from './products/products.module';
-import { CampaignsModule } from './campaigns/campaigns.module';
-import { ClicksModule } from './clicks/clicks.module';
-import { LeadsModule } from './leads/leads.module';
-import { WhatsappModule } from './whatsapp/whatsapp.module';
-import { EventsModule } from './events/events.module';
-import { OrdersModule } from './orders/orders.module';
-import { DashboardModule } from './dashboard/dashboard.module';
-import { AiModule } from './ai/ai.module';
-import { UsersModule } from './users/users.module';
 import { UploadModule } from './upload/upload.module';
-import { CryptoService } from './common/services/crypto.service';
+import { PagesModule } from './pages/pages.module';
+import { AiModule } from './ai/ai.module';
+import { RenderModule } from './render/render.module';
+import { PublicModule } from './public/public.module';
 import { PrismaService } from './common/services/prisma.service';
 
 @Module({
@@ -28,21 +19,13 @@ import { PrismaService } from './common/services/prisma.service';
       },
     }),
     HealthModule,
-    AuthModule,
-    MetaModule,
-    ProductsModule,
-    CampaignsModule,
-    ClicksModule,
-    LeadsModule,
-    WhatsappModule,
-    EventsModule,
-    OrdersModule,
-    DashboardModule,
-    AiModule,
-    UsersModule,
     UploadModule,
+    PagesModule,
+    AiModule,
+    RenderModule,
+    PublicModule,
   ],
-  providers: [CryptoService, PrismaService],
-  exports: [CryptoService, PrismaService],
+  providers: [PrismaService],
+  exports: [PrismaService],
 })
 export class AppModule {}

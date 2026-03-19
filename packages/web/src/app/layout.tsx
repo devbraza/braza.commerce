@@ -1,21 +1,15 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
-import { Sidebar } from '@/components/sidebar';
 
 const inter = Inter({
   variable: '--font-sans',
   subsets: ['latin'],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
-
 export const metadata: Metadata = {
-  title: 'BrazaChat',
-  description: 'WhatsApp-centric CRM for Meta Ads',
+  title: 'braza.commerce',
+  description: 'AI-powered product page builder for e-commerce',
 };
 
 export const viewport: Viewport = {
@@ -29,9 +23,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className={`flex min-h-screen antialiased bg-[#09090b] text-[#fafafa] ${inter.variable} ${jetbrainsMono.variable} font-sans`}>
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+      <body className={`min-h-screen antialiased bg-[#09090b] text-[#fafafa] ${inter.variable} font-sans`}>
+        {children}
       </body>
     </html>
   );

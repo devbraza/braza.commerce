@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coelha Decorativa Porta-Ovos</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* ===== URGENCY TOP BAR ===== */
+    .top-bar {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .top-bar-dot {
+      width: 5px; height: 5px;
+      background: #2CB67D;
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ===== CAROUSEL ===== */
+    .carousel {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: #f7f5f0;
+    }
+
+    .carousel-track {
+      display: flex;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 100%;
+    }
+
+    .carousel-slide { min-width: 100%; height: 100%; }
+    .carousel-slide img { width: 100%; height: 100%; object-fit: cover; }
+
+    .carousel-dots {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+    }
+
+    .carousel-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .carousel-dot.active { background: rgba(0,0,0,0.55); transform: scale(1.15); }
+
+    /* ===== PRODUCT HEADER ===== */
+    .product-header { padding: 20px 20px 0; }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .product-brand {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #b08968;
+    }
+
+    .sold-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #2CB67D;
+      background: #f0fdf4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sold-badge svg { width: 10px; height: 10px; }
+
+    .product-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 18px;
+    }
+
+    .rating-stars { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
+    .rating-count { font-size: 11px; color: #999; }
+
+    .price-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .price-current { font-size: 30px; font-weight: 800; color: #111; letter-spacing: -0.03em; }
+    .price-old { font-size: 15px; color: #bbb; text-decoration: line-through; }
+
+    .price-save {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: #2CB67D;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .price-installments { font-size: 11px; color: #999; margin-bottom: 18px; }
+
+    /* ===== STOCK BAR ===== */
+    .stock-bar {
+      margin: 0 0 20px;
+    }
+
+    .stock-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ef4444;
+      margin-bottom: 6px;
+    }
+
+    .stock-track {
+      height: 4px;
+      background: #f0f0f0;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .stock-fill {
+      height: 100%;
+      width: 18%;
+      background: linear-gradient(90deg, #ef4444, #f97316);
+      border-radius: 2px;
+      transition: width 0.5s;
+    }
+
+    /* ===== CTA ===== */
+    .cta-wrap { padding: 0 20px; margin-bottom: 8px; }
+
+    .cta-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 18px;
+      background: #2CB67D;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .cta-button:hover {
+      background: #239d6a;
+      box-shadow: 0 6px 20px rgba(44, 182, 125, 0.4);
+    }
+
+    .cta-button:active { transform: scale(0.985); }
+
+    .cta-sub {
+      text-align: center;
+      font-size: 10px;
+      color: #aaa;
+      padding: 6px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .cta-sub svg { width: 10px; height: 10px; color: #bbb; flex-shrink: 0; }
+
+    /* ===== MINI REVIEW (near CTA) ===== */
+    .mini-review {
+      margin: 12px 20px 0;
+      padding: 10px 14px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .mini-review-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #e8e8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      flex-shrink: 0;
+    }
+
+    .mini-review-body { flex: 1; }
+
+    .mini-review-stars { color: #f59e0b; font-size: 10px; letter-spacing: 1px; margin-bottom: 2px; }
+
+    .mini-review-text {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #666;
+    }
+
+    .mini-review-author { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+    /* ===== TRUST PILLS ===== */
+    .trust-pills {
+      display: flex;
+      gap: 0;
+      padding: 0 20px;
+      margin: 16px 0 0;
+    }
+
+    .trust-pill {
+      flex: 1;
+      text-align: center;
+      padding: 10px 4px;
+      border-right: 1px solid #f0f0f0;
+    }
+
+    .trust-pill:last-child { border-right: none; }
+    .trust-pill-icon { margin-bottom: 4px; display: flex; align-items: center; justify-content: center; }
+    .trust-pill-icon svg { width: 16px; height: 16px; color: #2CB67D; }
+    .trust-pill-label { font-size: 9px; font-weight: 600; color: #888; line-height: 1.3; }
+
+    /* ===== SPACER ===== */
+    .spacer { height: 20px; }
+    .spacer-line { height: 1px; background: #f0f0f0; margin: 20px 20px; }
+
+    /* ===== SECTIONS ===== */
+    .section-pad { padding: 0 20px; }
+    .section-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .desc-text { font-size: 13px; line-height: 1.7; color: #555; margin-bottom: 12px; }
+
+    /* ===== FEATURES ===== */
+    .features { display: flex; flex-direction: column; gap: 8px; }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+
+    .feature-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #2CB67D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-check svg { width: 11px; height: 11px; color: #fff; }
+    .feature span { font-size: 13px; color: #333; }
+
+    /* ===== REVIEWS ===== */
+    .reviews-scroll {
+      display: flex;
+      gap: 10px;
+      padding: 0 20px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .reviews-scroll::-webkit-scrollbar { display: none; }
+
+    .review-card {
+      flex-shrink: 0;
+      width: 250px;
+      padding: 14px;
+      background: #fafafa;
+      border-radius: 10px;
+      border: 1px solid #f0f0f0;
+      scroll-snap-align: start;
+    }
+
+    .review-stars { color: #f59e0b; font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
+    .review-text { font-size: 12px; line-height: 1.55; color: #555; margin-bottom: 8px; }
+    .review-author { font-size: 10px; font-weight: 600; color: #333; }
+    .review-verified { font-size: 9px; color: #2CB67D; font-weight: 500; }
+
+    /* ===== FAQ ===== */
+    .faq-item { border-bottom: 1px solid #f0f0f0; }
+    .faq-item:last-child { border-bottom: none; }
+
+    .faq-q {
+      font-size: 13px;
+      font-weight: 600;
+      color: #222;
+      padding: 12px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .faq-q::after {
+      content: '+';
+      font-size: 16px;
+      font-weight: 400;
+      color: #ccc;
+    }
+
+    .faq-item.open .faq-q::after { content: '−'; color: #999; }
+    .faq-a { font-size: 12px; line-height: 1.6; color: #888; padding: 0 0 12px; display: none; }
+    .faq-item.open .faq-a { display: block; }
+
+    /* ===== FINAL CTA ===== */
+    .final-cta {
+      padding: 28px 0 20px;
+      text-align: center;
+      background: #f4f4f5;
+    }
+
+    .final-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 3px;
+      letter-spacing: -0.02em;
+    }
+
+    .final-sub { font-size: 11px; color: #999; margin-bottom: 16px; }
+
+    /* ===== TIMER ===== */
+    .timer-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .timer-box {
+      background: #f4f4f5;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+      min-width: 58px;
+    }
+
+    .timer-value { font-size: 24px; font-weight: 800; color: #111; line-height: 1; }
+    .timer-label { font-size: 8px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+    .timer-sep { font-size: 18px; font-weight: 700; color: #ddd; }
+    .timer-notice { font-size: 10px; color: #bbb; margin-bottom: 16px; }
+
+    /* ===== FOOTER ===== */
+    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #bbb; background: #f4f4f5; }
+    .footer a { color: #bbb; text-decoration: none; }
+
+    /* ===== STICKY ===== */
+    .sticky-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding: 8px 16px;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .sticky-bottom.hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
+
+    .sticky-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sticky-left { flex-shrink: 0; }
+    .sticky-price { font-size: 17px; font-weight: 800; color: #111; letter-spacing: -0.02em; }
+
+    .sticky-lock {
+      display: flex; align-items: center; gap: 3px;
+      font-size: 9px; color: #bbb; margin-top: 1px;
+    }
+
+    .sticky-lock svg { width: 9px; height: 9px; }
+    .sticky-inner .cta-button { padding: 14px 16px; font-size: 14px; border-radius: 10px; }
+
+    /* ===== RESPONSIVE ===== */
+    .carousel { touch-action: pan-y; }
+
+    @media (min-width: 481px) {
+      body { background: #f0f0f0; }
+      .page {
+        min-height: auto;
+        margin: 32px auto;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+        background: #fff;
+      }
+      .sticky-bottom { display: none !important; }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="page">
+
+  <!-- CAROUSEL -->
+  <div class="carousel" id="carousel">
+    <div class="carousel-track" id="carouselTrack">
+      <div class="carousel-slide"><img src="product-main.webp" alt="Coelha Decorativa Porta-Ovos"></div>
+    </div>
+    <div class="carousel-dots" id="carouselDots">
+      <div class="carousel-dot active" data-index="0"></div>
+    </div>
+  </div>
+
+  <!-- HEADER — compact, all above fold -->
+  <div class="product-header">
+    <div class="header-top">
+      <span class="product-brand">Especial de Páscoa</span>
+      <span class="sold-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="soldCount">243</span> vendidos
+      </span>
+    </div>
+    <h1 class="product-name">Coelha Decorativa Porta-Ovos</h1>
+    <div class="rating-row">
+      <span class="rating-stars">★★★★★</span>
+      <span class="rating-count">4.9 · 243 avaliações</span>
+    </div>
+    <div class="price-row">
+      <span class="price-current">R$ 79,90</span>
+      <span class="price-old">R$ 129,90</span>
+      <span class="price-save">-38%</span>
+    </div>
+    <p class="price-installments">ou 3x de R$ 26,63 sem juros</p>
+
+    <!-- STOCK (urgency) -->
+    <div class="stock-bar">
+      <div class="stock-text" id="stockText">⚡ Restam poucas unidades</div>
+      <div class="stock-track"><div class="stock-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- CTA 1 — above the fold on most phones -->
+  <div class="cta-wrap">
+    <a href="#" class="cta-button">Comprar agora</a>
+  </div>
+  <p class="cta-sub">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Pagamento seguro
+  </p>
+
+  <!-- MINI REVIEW — social proof near CTA -->
+  <div class="mini-review">
+    <div class="mini-review-avatar">CF</div>
+    <div class="mini-review-body">
+      <div class="mini-review-stars">★★★★★</div>
+      <div class="mini-review-text">"Minha mãe amou! O acabamento é muito bem feito, parece peça de decoração cara."</div>
+      <div class="mini-review-author">Camila F. · Compra verificada</div>
+    </div>
+  </div>
+
+  <!-- TRUST PILLS -->
+  <div class="trust-pills">
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+      <div class="trust-pill-label">Acabamento<br>premium</div>
+    </div>
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+      <div class="trust-pill-label">Pronta p/<br>presente</div>
+    </div>
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+      <div class="trust-pill-label">Frete<br>grátis</div>
+    </div>
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div class="trust-pill-label">Pagamento<br>seguro</div>
+    </div>
+  </div>
+
+  <div class="spacer-line"></div>
+
+  <!-- DESCRIPTION (condensed) -->
+  <div class="section-pad">
+    <div class="section-title">Sobre o produto</div>
+    <p class="desc-text">
+      Peça decorativa com design de coelha segurando um ovo aberto — perfeita para acomodar ovinhos de chocolate, bombons ou amêndoas. Ideal para presentear ou montar a mesa de Páscoa que todo mundo vai elogiar. Use depois como porta-joias ou porta-doces o ano inteiro.
+    </p>
+  </div>
+
+  <!-- FEATURES (compact cards) -->
+  <div class="section-pad" style="padding-bottom: 0;">
+    <div class="features">
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Acabamento premium — branco fosco, leve e resistente</span>
+      </div>
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Formato funcional — comporta ovinhos, bombons ou amêndoas</span>
+      </div>
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Tamanho ideal para centro de mesa ou aparador</span>
+      </div>
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Embalada para presente — pronta para entregar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="spacer"></div>
+  <div class="cta-wrap">
+    <a href="#" class="cta-button">Comprar agora</a>
+  </div>
+  <p class="cta-sub">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Pagamento seguro
+  </p>
+
+  <div class="spacer-line"></div>
+
+  <!-- REVIEWS -->
+  <div class="section-pad" style="margin-bottom: 10px;">
+    <div class="section-title">Avaliações ★ 4.9</div>
+  </div>
+
+  <div class="reviews-scroll">
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Comprei 5 — uma pra cada pessoa da família. Chegou perfeito, bem embalado. Atendimento super rápido."</p>
+      <div class="review-author">Roberto M.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Linda demais! Todo mundo elogia. Depois da Páscoa vou usar pra colocar bijuterias. Vale muito o preço."</p>
+      <div class="review-author">Ana Paula S.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Presente perfeito. Minha sogra ficou encantada. Acabamento impecável, parece muito mais caro."</p>
+      <div class="review-author">Marcos L.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+  </div>
+
+  <div class="spacer-line"></div>
+
+  <!-- FAQ (only essential) -->
+  <div class="section-pad" style="padding-bottom: 0;">
+    <div class="section-title">Dúvidas</div>
+    <div class="faq-item open">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Os ovinhos vêm junto?</div>
+      <div class="faq-a">Não, os ovinhos são vendidos separadamente. O produto é a peça decorativa porta-ovos.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Chega antes da Páscoa?</div>
+      <div class="faq-a">Pedidos até sexta são despachados no mesmo dia. Prazo: 3 a 7 dias úteis.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">E se chegar com defeito?</div>
+      <div class="faq-a">Reenviamos sem custo. Mande uma foto e resolvemos na hora.</div>
+    </div>
+  </div>
+
+  <!-- FINAL CTA + TIMER -->
+  <div class="final-cta" id="finalCta">
+    <div style="padding: 24px 20px 22px; margin: 0 20px; background: #fff; border-radius: 14px; border: 1px solid #e8e8e8; box-shadow: 0 2px 12px rgba(0,0,0,0.05);">
+      <div class="final-title">Garanta a sua antes que acabe</div>
+      <p class="final-sub">Estoque limitado — edição de Páscoa 2026</p>
+
+      <div class="timer-wrap">
+        <div class="timer-box">
+          <div class="timer-value" id="timerMin">10</div>
+          <div class="timer-label">min</div>
+        </div>
+        <span class="timer-sep">:</span>
+        <div class="timer-box">
+          <div class="timer-value" id="timerSec">00</div>
+          <div class="timer-label">seg</div>
+        </div>
+      </div>
+      <p class="timer-notice">Preço promocional expira em breve</p>
+
+      <a href="#" class="cta-button" style="margin: 0;">Comprar agora</a>
+      <p class="cta-sub" style="padding: 6px 0 0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Pagamento seguro
+      </p>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="/privacy">Política de Privacidade</a>
+  </div>
+
+</div>
+
+<!-- STICKY -->
+<div class="sticky-bottom hidden" id="stickyBottom">
+  <div class="sticky-inner">
+    <div class="sticky-left">
+      <div class="sticky-price">R$ 79,90</div>
+      <div class="sticky-lock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Pagamento seguro
+      </div>
+    </div>
+    <a href="#" class="cta-button" style="flex:1;">Comprar agora</a>
+  </div>
+</div>
+
+<script>
+  // Carousel
+  const track = document.getElementById('carouselTrack');
+  const dots = document.querySelectorAll('.carousel-dot');
+  const total = document.querySelectorAll('.carousel-slide').length;
+  let cur = 0, startX = 0, dragging = false;
+
+  function goTo(i) {
+    if (total <= 1) return;
+    if (i < 0) i = total - 1;
+    if (i >= total) i = 0;
+    cur = i;
+    track.style.transform = `translateX(-${cur * 100}%)`;
+    dots.forEach((d, j) => d.classList.toggle('active', j === cur));
+  }
+
+  dots.forEach(d => d.onclick = () => goTo(+d.dataset.index));
+
+  const car = document.getElementById('carousel');
+  car.addEventListener('touchstart', e => { startX = e.touches[0].clientX; dragging = true; });
+  car.addEventListener('touchend', e => {
+    if (!dragging) return;
+    const d = startX - e.changedTouches[0].clientX;
+    if (Math.abs(d) > 50) d > 0 ? goTo(cur + 1) : goTo(cur - 1);
+    dragging = false;
+  });
+
+  // Sticky
+  const sticky = document.getElementById('stickyBottom');
+  const header = document.querySelector('.product-header');
+  const finalCta = document.getElementById('finalCta');
+  let hVis = true, fVis = false;
+
+  new IntersectionObserver(e => { hVis = e[0].isIntersecting; up(); }, { threshold: 0 }).observe(header);
+  new IntersectionObserver(e => { fVis = e[0].isIntersecting; up(); }, { threshold: 0.2 }).observe(finalCta);
+
+  function up() { sticky.classList.toggle('hidden', hVis || fVis); }
+
+  // Timer
+  let tl = 10 * 60;
+  const tM = document.getElementById('timerMin');
+  const tS = document.getElementById('timerSec');
+
+  function tick() {
+    if (tl <= 0) { tl = 0; clearInterval(ti); }
+    tM.textContent = String(Math.floor(tl / 60)).padStart(2, '0');
+    tS.textContent = String(tl % 60).padStart(2, '0');
+    tl--;
+  }
+
+  tick();
+  const ti = setInterval(tick, 1000);
+
+  // Sold counter — increments randomly
+  let sold = 243;
+  const soldEl = document.getElementById('soldCount');
+  const stockText = document.getElementById('stockText');
+  const stockFill = document.querySelector('.stock-fill');
+
+  function incrementSold() {
+    sold++;
+    soldEl.textContent = sold;
+    // Update stock bar — shrinks as more sell
+    const remaining = Math.max(5, 100 - (sold - 243));
+    const pct = Math.max(5, remaining * 0.18);
+    stockFill.style.width = pct + '%';
+    if (remaining < 30) {
+      stockText.textContent = '🔥 Quase esgotado — restam apenas ' + remaining + ' unidades';
+    } else {
+      stockText.textContent = '⚡ Restam poucas unidades';
+    }
+  }
+
+  // Random interval between 8-25 seconds
+  function scheduleNext() {
+    const delay = (Math.random() * 17 + 8) * 1000;
+    setTimeout(() => { incrementSold(); scheduleNext(); }, delay);
+  }
+
+  scheduleNext();
+</script>
+
+</body>
+</html>

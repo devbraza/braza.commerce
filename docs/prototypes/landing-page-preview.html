@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coelha Decorativa Porta-Ovos</title>
+  <meta name="description" content="Coelha Decorativa Porta-Ovos — perfeita para Pascoa. Frete gratis, 7 dias de garantia.">
+  <meta property="og:title" content="Coelha Decorativa Porta-Ovos">
+  <meta property="og:description" content="Peca decorativa premium para Pascoa. Compre agora com frete gratis.">
+  <meta property="og:type" content="product">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"></noscript>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+
+    /* ===== URGENCY TOP BAR ===== */
+    .top-bar {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 8px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .top-bar-dot {
+      width: 5px; height: 5px;
+      background: #2CB67D;
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ===== CAROUSEL ===== */
+    .carousel {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      background: #f7f5f0;
+    }
+
+    .carousel-track {
+      display: flex;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      height: 100%;
+      will-change: transform;
+    }
+
+    .carousel-slide { min-width: 100%; height: 100%; }
+    .carousel-slide img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
+
+    .carousel-dots {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+    }
+
+    .carousel-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.15);
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .carousel-dot.active { background: rgba(0,0,0,0.55); transform: scale(1.15); }
+
+    .carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.85);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+
+    .carousel-arrow:hover { background: #fff; }
+    .carousel-arrow svg { width: 16px; height: 16px; color: #333; }
+    .carousel-arrow.left { left: 10px; }
+    .carousel-arrow.right { right: 10px; }
+
+    @media (max-width: 480px) {
+      .carousel-arrow { width: 28px; height: 28px; }
+      .carousel-arrow svg { width: 14px; height: 14px; }
+    }
+
+    /* ===== PRODUCT HEADER ===== */
+    .product-header { padding: 20px 20px 0; }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .product-brand {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #b08968;
+    }
+
+    .sold-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: #2CB67D;
+      background: #f0fdf4;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sold-badge svg { width: 10px; height: 10px; }
+
+    .product-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .rating-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 18px;
+    }
+
+    .rating-stars { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
+    .rating-count { font-size: 11px; color: #999; }
+
+    .viewing-now {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #e67e22;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .viewing-dot {
+      width: 6px; height: 6px;
+      background: #e67e22;
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    .price-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .price-current { font-size: 30px; font-weight: 800; color: #111; letter-spacing: -0.03em; }
+    .price-old { font-size: 15px; color: #ef4444; text-decoration: line-through; opacity: 0.7; }
+
+    .price-save {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: #2CB67D;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .price-installments { font-size: 11px; color: #999; margin-bottom: 18px; }
+
+    /* ===== STOCK BAR ===== */
+    .stock-bar {
+      margin: 0 0 20px;
+    }
+
+    .stock-text {
+      font-size: 11px;
+      font-weight: 600;
+      color: #ef4444;
+      margin-bottom: 6px;
+    }
+
+    .stock-track {
+      height: 6px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      overflow: visible;
+    }
+
+    .stock-fill {
+      height: 100%;
+      width: 18%;
+      background: linear-gradient(90deg, #ef4444, #f97316);
+      border-radius: 3px;
+      transition: width 0.8s ease-out;
+    }
+
+    @keyframes stockGlow {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); filter: brightness(1); }
+      30% { box-shadow: 0 0 12px 4px rgba(239, 68, 68, 0.6); filter: brightness(1.8); }
+      60% { box-shadow: 0 0 8px 2px rgba(249, 115, 22, 0.4); filter: brightness(1.4); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); filter: brightness(1); }
+    }
+
+    @keyframes textFlash {
+      0% { color: #ef4444; }
+      30% { color: #ff0000; transform: scale(1.03); }
+      100% { color: #ef4444; transform: scale(1); }
+    }
+
+    .stock-bar.pulse .stock-fill {
+      animation: stockGlow 0.8s ease-out;
+    }
+
+    .stock-bar.pulse .stock-text {
+      animation: textFlash 0.8s ease-out;
+    }
+
+    /* ===== CTA ===== */
+    .cta-wrap { padding: 0 20px; margin-bottom: 8px; }
+
+    .cta-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 18px;
+      background: #2CB67D;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    .cta-button:hover {
+      background: #239d6a;
+      box-shadow: 0 6px 20px rgba(44, 182, 125, 0.4);
+    }
+
+    .cta-button:active { transform: scale(0.985); }
+
+    @keyframes ctaPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(44, 182, 125, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(44, 182, 125, 0); }
+    }
+
+    .cta-button { animation: ctaPulse 2.5s ease-in-out infinite; }
+    .cta-button:hover { animation: none; }
+
+    /* ===== SOCIAL PROOF TOAST ===== */
+    .social-toast {
+      position: fixed;
+      bottom: 70px;
+      left: 16px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 101;
+      max-width: 320px;
+      transform: translateX(-120%);
+      opacity: 0;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+      will-change: transform, opacity;
+    }
+
+    .social-toast.show { transform: translateX(0); opacity: 1; }
+
+    .social-toast-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #2CB67D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .social-toast-avatar svg { width: 16px; height: 16px; color: #fff; }
+
+    .social-toast-text { font-size: 11px; line-height: 1.4; color: #333; }
+    .social-toast-text strong { font-weight: 700; }
+    .social-toast-time { font-size: 9px; color: #aaa; margin-top: 1px; }
+
+    @media (min-width: 481px) {
+      .social-toast { bottom: 24px; left: 24px; }
+    }
+
+    .cta-sub {
+      text-align: center;
+      font-size: 10px;
+      color: #aaa;
+      padding: 6px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .cta-sub svg { width: 10px; height: 10px; color: #bbb; flex-shrink: 0; }
+
+    .payment-flags { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+
+    /* ===== MINI REVIEW (near CTA) ===== */
+    .mini-review {
+      margin: 12px 20px 0;
+      padding: 10px 14px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #f0f0f0;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .mini-review-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #e8e8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      flex-shrink: 0;
+    }
+
+    .mini-review-body { flex: 1; }
+
+    .mini-review-stars { color: #f59e0b; font-size: 10px; letter-spacing: 1px; margin-bottom: 2px; }
+
+    .mini-review-text {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #666;
+    }
+
+    .mini-review-author { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+    /* ===== TRUST PILLS ===== */
+    .trust-pills {
+      display: flex;
+      gap: 0;
+      padding: 0 20px;
+      margin: 16px 0 0;
+    }
+
+    .trust-pill {
+      flex: 1;
+      text-align: center;
+      padding: 10px 4px;
+      border-right: 1px solid #f0f0f0;
+    }
+
+    .trust-pill:last-child { border-right: none; }
+    .trust-pill-icon { margin-bottom: 4px; display: flex; align-items: center; justify-content: center; }
+    .trust-pill-icon svg { width: 16px; height: 16px; color: #2CB67D; }
+    .trust-pill-label { font-size: 9px; font-weight: 600; color: #888; line-height: 1.3; }
+
+    /* ===== SPACER ===== */
+    .spacer { height: 20px; }
+    .spacer-line { height: 1px; background: #f0f0f0; margin: 20px 20px; }
+
+    /* ===== SECTIONS ===== */
+    .section-pad { padding: 0 20px; }
+    .section-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .desc-text { font-size: 13px; line-height: 1.7; color: #555; margin-bottom: 12px; }
+
+    /* ===== FEATURES ===== */
+    .features { display: flex; flex-direction: column; gap: 8px; }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+
+    .feature-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #2CB67D;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-check svg { width: 11px; height: 11px; color: #fff; }
+    .feature span { font-size: 13px; color: #333; }
+
+    /* ===== REVIEWS ===== */
+    .reviews-scroll {
+      display: flex;
+      gap: 10px;
+      padding: 0 20px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .reviews-scroll::-webkit-scrollbar { display: none; }
+
+    .review-card {
+      flex-shrink: 0;
+      width: 250px;
+      padding: 14px;
+      background: #fafafa;
+      border-radius: 10px;
+      border: 1px solid #f0f0f0;
+      scroll-snap-align: start;
+    }
+
+    .review-stars { color: #f59e0b; font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
+    .review-text { font-size: 12px; line-height: 1.55; color: #555; margin-bottom: 8px; }
+    .review-author { font-size: 10px; font-weight: 600; color: #333; }
+    .review-verified { font-size: 9px; color: #2CB67D; font-weight: 500; }
+
+    /* ===== FAQ ===== */
+    .faq-item { border-bottom: 1px solid #f0f0f0; }
+    .faq-item:last-child { border-bottom: none; }
+
+    .faq-q {
+      font-size: 13px;
+      font-weight: 600;
+      color: #222;
+      padding: 12px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .faq-q::after {
+      content: '+';
+      font-size: 16px;
+      font-weight: 400;
+      color: #ccc;
+    }
+
+    .faq-item.open .faq-q::after { content: '−'; color: #999; }
+    .faq-a { font-size: 12px; line-height: 1.6; color: #888; padding: 0 0 12px; display: none; }
+    .faq-item.open .faq-a { display: block; }
+
+    /* ===== FINAL CTA ===== */
+    .final-cta {
+      padding: 28px 0 20px;
+      text-align: center;
+      background: #f4f4f5;
+    }
+
+    .final-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #111;
+      margin-bottom: 3px;
+      letter-spacing: -0.02em;
+    }
+
+    .final-sub { font-size: 11px; color: #999; margin-bottom: 16px; }
+
+    /* ===== TIMER ===== */
+    .timer-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .timer-box {
+      background: #f4f4f5;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+      min-width: 58px;
+    }
+
+    .timer-value { font-size: 24px; font-weight: 800; color: #111; line-height: 1; }
+    .timer-label { font-size: 8px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+    .timer-sep { font-size: 18px; font-weight: 700; color: #ddd; }
+    .timer-notice { font-size: 10px; color: #bbb; margin-bottom: 16px; }
+
+    /* ===== FOOTER ===== */
+    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #bbb; background: #f4f4f5; }
+    .footer a { color: #999; text-decoration: underline; }
+    .footer a:hover { color: #666; }
+
+    .footer-disclaimers {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 16px 0 12px;
+      text-align: center;
+    }
+
+    .footer-disclaimers p {
+      font-size: 9px;
+      line-height: 1.5;
+      color: #bbb;
+      margin-bottom: 8px;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      margin-bottom: 10px;
+      font-size: 10px;
+    }
+
+    .footer-sep { color: #ddd; }
+
+    /* ===== STICKY ===== */
+    .sticky-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      background: #fff;
+      border-top: 1px solid #eee;
+      padding: 8px 16px;
+      transition: transform 0.3s, opacity 0.3s;
+      will-change: transform, opacity;
+    }
+
+    .sticky-bottom.hidden { transform: translateY(100%); opacity: 0; pointer-events: none; }
+
+    .sticky-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sticky-left { flex-shrink: 0; }
+    .sticky-price { font-size: 17px; font-weight: 800; color: #111; letter-spacing: -0.02em; }
+
+    .sticky-lock {
+      display: flex; align-items: center; gap: 3px;
+      font-size: 9px; color: #bbb; margin-top: 1px;
+    }
+
+    .sticky-lock svg { width: 9px; height: 9px; }
+    .sticky-inner .cta-button { padding: 14px 16px; font-size: 14px; border-radius: 10px; }
+
+    /* ===== RESPONSIVE ===== */
+    .carousel { touch-action: pan-y; }
+
+    @media (min-width: 481px) {
+      body { background: #f0f0f0; }
+      .page {
+        min-height: auto;
+        margin: 32px auto;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+        background: #fff;
+      }
+      .sticky-bottom { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- TOP BAR — urgency -->
+  <div class="top-bar">
+    <div class="top-bar-dot"></div>
+    Frete grátis hoje · Entrega expressa para todo o Brasil
+  </div>
+
+  <!-- CAROUSEL -->
+  <div class="carousel" id="carousel">
+    <div class="carousel-track" id="carouselTrack">
+      <div class="carousel-slide"><img src="product-main.webp" alt="Coelha Decorativa Porta-Ovos" fetchpriority="high"></div>
+      <div class="carousel-slide" style="background:#ede9e3;display:flex;align-items:center;justify-content:center;"><span style="color:#b08968;font-size:13px;font-weight:600;">Foto 2 — Detalhe do acabamento</span></div>
+      <div class="carousel-slide" style="background:#e8efe6;display:flex;align-items:center;justify-content:center;"><span style="color:#6b8f6b;font-size:13px;font-weight:600;">Foto 3 — Na mesa de Páscoa</span></div>
+      <div class="carousel-slide" style="background:#e9e3ed;display:flex;align-items:center;justify-content:center;"><span style="color:#8b6b8f;font-size:13px;font-weight:600;">Foto 4 — Embalagem presente</span></div>
+      <div class="carousel-slide" style="background:#e3ecef;display:flex;align-items:center;justify-content:center;"><span style="color:#6b828f;font-size:13px;font-weight:600;">Foto 5 — Tamanho real (mão)</span></div>
+      <div class="carousel-slide" style="background:#efe9e3;display:flex;align-items:center;justify-content:center;"><span style="color:#8f7a6b;font-size:13px;font-weight:600;">Foto 6 — Cliente real usando</span></div>
+    </div>
+    <button class="carousel-arrow left" id="arrowLeft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="carousel-arrow right" id="arrowRight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
+    <div class="carousel-dots" id="carouselDots">
+      <div class="carousel-dot active" data-index="0"></div>
+      <div class="carousel-dot" data-index="1"></div>
+      <div class="carousel-dot" data-index="2"></div>
+      <div class="carousel-dot" data-index="3"></div>
+      <div class="carousel-dot" data-index="4"></div>
+      <div class="carousel-dot" data-index="5"></div>
+    </div>
+  </div>
+
+  <!-- HEADER — compact, all above fold -->
+  <div class="product-header">
+    <div class="header-top">
+      <span class="product-brand">Especial de Páscoa</span>
+      <span class="sold-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="soldCount">243</span> vendidos
+      </span>
+    </div>
+    <h1 class="product-name">Coelha Decorativa Porta-Ovos</h1>
+    <div class="rating-row">
+      <span class="rating-stars">★★★★★</span>
+      <span class="rating-count">4.9 · 243 avaliações</span>
+    </div>
+    <div class="viewing-now">
+      <div class="viewing-dot"></div>
+      <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="viewingCount">23</span> pessoas estão vendo agora
+    </div>
+    <div class="price-row">
+      <span class="price-current">R$ 79,90</span>
+      <span class="price-old">R$ 129,90</span>
+      <span class="price-save">-38%</span>
+    </div>
+    <p class="price-installments">ou 3x de R$ 26,63 sem juros</p>
+
+    <!-- STOCK (urgency) -->
+    <div class="stock-bar">
+      <div class="stock-text" id="stockText"><svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Restam poucas unidades</div>
+      <div class="stock-track"><div class="stock-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- CTA 1 — above the fold on most phones -->
+  <div class="cta-wrap">
+    <a href="#" class="cta-button">Comprar agora</a>
+  </div>
+  <p class="cta-sub">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Compra protegida · Satisfação garantida
+  </p>
+
+  <!-- PAYMENT ICONS -->
+  <div class="payment-flags">
+    <!-- Visa -->
+    <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/>
+      <path d="M17.4 18.2l1.7-10.4h2.7l-1.7 10.4h-2.7zm11.3-10.1c-.5-.2-1.4-.4-2.4-.4-2.7 0-4.5 1.4-4.5 3.4 0 1.5 1.3 2.3 2.4 2.8 1 .5 1.4.8 1.4 1.3 0 .7-.8 1-1.6 1-.9 0-1.7-.2-2.5-.5l-.4-.2-.4 2.3c.7.3 1.9.5 3.2.5 2.8 0 4.7-1.4 4.7-3.5 0-1.2-.7-2.1-2.2-2.8-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.9 0 1.5.2 2 .4l.2.1.5-2.2zm6.7-.3h-2.1c-.6 0-1.1.2-1.4.9l-3.9 9.5h2.8l.6-1.5h3.4l.3 1.5h2.4l-2.1-10.4zm-3.3 6.7l1.1-3 .3-.9.2.8.6 3.1h-2.2zM16 7.8l-2.5 7.1-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 9.1h2.8l4.2-10.6H16z" fill="#1A1F71"/>
+      <path d="M11.5 7.8H7.4l0 .2c3.3.8 5.5 2.9 6.4 5.4l-.9-4.7c-.2-.7-.7-.9-1.4-.9z" fill="#F7A600"/>
+    </svg>
+    <!-- Mastercard -->
+    <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/>
+      <circle cx="17" cy="14" r="7.5" fill="#EB001B"/>
+      <circle cx="25" cy="14" r="7.5" fill="#F79E1B"/>
+      <path d="M21 8.1a7.5 7.5 0 010 11.8 7.5 7.5 0 010-11.8z" fill="#FF5F00"/>
+    </svg>
+    <!-- PIX — logo oficial Banco Central (Font Awesome / brand book) -->
+    <svg width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/>
+      <svg x="11" y="4" width="20" height="20" viewBox="0 0 512 512">
+        <g fill="#4BB8A9" fill-rule="evenodd">
+          <path d="M112.57 391.19c20.056 0 38.928-7.808 53.12-22l76.693-76.692c5.385-5.404 14.765-5.384 20.15 0l76.989 76.989c14.191 14.172 33.045 21.98 53.12 21.98h15.098l-97.138 97.139c-30.326 30.344-79.505 30.344-109.85 0l-97.415-97.416h9.232zm280.068-271.294c-20.056 0-38.929 7.809-53.12 22l-76.97 76.99c-5.551 5.53-14.6 5.568-20.15-.02l-76.711-76.693c-14.192-14.191-33.046-21.999-53.12-21.999h-9.234l97.416-97.416c30.344-30.344 79.523-30.344 109.867 0l97.138 97.138h-15.116z"/>
+          <path d="M22.758 200.753l58.024-58.024h31.787c13.84 0 27.384 5.605 37.172 15.394l76.694 76.693c7.178 7.179 16.596 10.768 26.033 10.768 9.417 0 18.854-3.59 26.014-10.75l76.989-76.99c9.787-9.787 23.331-15.393 37.171-15.393h37.654l58.3 58.302c30.343 30.344 30.343 79.523 0 109.867l-58.3 58.303H392.64c-13.84 0-27.384-5.605-37.171-15.394l-76.97-76.99c-13.914-13.894-38.172-13.894-52.066.02l-76.694 76.674c-9.788 9.788-23.332 15.413-37.172 15.413H80.782L22.758 310.62c-30.344-30.345-30.344-79.524 0-109.868"/>
+        </g>
+      </svg>
+    </svg>
+  </div>
+
+  <!-- MINI REVIEW — social proof near CTA -->
+  <div class="mini-review">
+    <div class="mini-review-avatar">CF</div>
+    <div class="mini-review-body">
+      <div class="mini-review-stars">★★★★★</div>
+      <div class="mini-review-text">"Compra super fácil e rápida. Chegou antes do prazo, embalagem impecável. Minha mãe amou!"</div>
+      <div class="mini-review-author">Camila F. · Compra verificada</div>
+    </div>
+  </div>
+
+  <!-- TRUST PILLS -->
+  <div class="trust-pills">
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+      <div class="trust-pill-label">Compra<br>protegida</div>
+    </div>
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div class="trust-pill-label">Satisfação<br>garantida</div>
+    </div>
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+      <div class="trust-pill-label">Frete<br>grátis</div>
+    </div>
+    <div class="trust-pill">
+      <div class="trust-pill-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+      <div class="trust-pill-label">Troca<br>grátis</div>
+    </div>
+  </div>
+
+  <div class="spacer-line"></div>
+
+  <!-- DESCRIPTION (condensed) -->
+  <div class="section-pad">
+    <div class="section-title">Sobre o produto</div>
+    <p class="desc-text">
+      Peça decorativa com design de coelha segurando um ovo aberto — perfeita para acomodar ovinhos de chocolate, bombons ou amêndoas. Ideal para presentear ou montar a mesa de Páscoa que todo mundo vai elogiar. Use depois como porta-joias ou porta-doces o ano inteiro.
+    </p>
+  </div>
+
+  <!-- FEATURES (compact cards) -->
+  <div class="section-pad" style="padding-bottom: 0;">
+    <div class="features">
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Acabamento premium — branco fosco, leve e resistente</span>
+      </div>
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Formato funcional — comporta ovinhos, bombons ou amêndoas</span>
+      </div>
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Tamanho ideal para centro de mesa ou aparador</span>
+      </div>
+      <div class="feature">
+        <div class="feature-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span>Embalada para presente — pronta para entregar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA 2 -->
+  <div class="spacer"></div>
+  <div class="cta-wrap">
+    <a href="#" class="cta-button">Comprar agora</a>
+  </div>
+  <p class="cta-sub">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Checkout seguro · PIX ou cartão
+  </p>
+  <!-- PAYMENT ICONS -->
+  <div class="payment-flags">
+    <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><path d="M17.4 18.2l1.7-10.4h2.7l-1.7 10.4h-2.7zm11.3-10.1c-.5-.2-1.4-.4-2.4-.4-2.7 0-4.5 1.4-4.5 3.4 0 1.5 1.3 2.3 2.4 2.8 1 .5 1.4.8 1.4 1.3 0 .7-.8 1-1.6 1-.9 0-1.7-.2-2.5-.5l-.4-.2-.4 2.3c.7.3 1.9.5 3.2.5 2.8 0 4.7-1.4 4.7-3.5 0-1.2-.7-2.1-2.2-2.8-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.9 0 1.5.2 2 .4l.2.1.5-2.2zm6.7-.3h-2.1c-.6 0-1.1.2-1.4.9l-3.9 9.5h2.8l.6-1.5h3.4l.3 1.5h2.4l-2.1-10.4zm-3.3 6.7l1.1-3 .3-.9.2.8.6 3.1h-2.2zM16 7.8l-2.5 7.1-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 9.1h2.8l4.2-10.6H16z" fill="#1A1F71"/><path d="M11.5 7.8H7.4l0 .2c3.3.8 5.5 2.9 6.4 5.4l-.9-4.7c-.2-.7-.7-.9-1.4-.9z" fill="#F7A600"/></svg>
+    <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><circle cx="17" cy="14" r="7.5" fill="#EB001B"/><circle cx="25" cy="14" r="7.5" fill="#F79E1B"/><path d="M21 8.1a7.5 7.5 0 010 11.8 7.5 7.5 0 010-11.8z" fill="#FF5F00"/></svg>
+    <svg width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><svg x="11" y="4" width="20" height="20" viewBox="0 0 512 512"><g fill="#4BB8A9" fill-rule="evenodd"><path d="M112.57 391.19c20.056 0 38.928-7.808 53.12-22l76.693-76.692c5.385-5.404 14.765-5.384 20.15 0l76.989 76.989c14.191 14.172 33.045 21.98 53.12 21.98h15.098l-97.138 97.139c-30.326 30.344-79.505 30.344-109.85 0l-97.415-97.416h9.232zm280.068-271.294c-20.056 0-38.929 7.809-53.12 22l-76.97 76.99c-5.551 5.53-14.6 5.568-20.15-.02l-76.711-76.693c-14.192-14.191-33.046-21.999-53.12-21.999h-9.234l97.416-97.416c30.344-30.344 79.523-30.344 109.867 0l97.138 97.138h-15.116z"/><path d="M22.758 200.753l58.024-58.024h31.787c13.84 0 27.384 5.605 37.172 15.394l76.694 76.693c7.178 7.179 16.596 10.768 26.033 10.768 9.417 0 18.854-3.59 26.014-10.75l76.989-76.99c9.787-9.787 23.331-15.393 37.171-15.393h37.654l58.3 58.302c30.343 30.344 30.343 79.523 0 109.867l-58.3 58.303H392.64c-13.84 0-27.384-5.605-37.171-15.394l-76.97-76.99c-13.914-13.894-38.172-13.894-52.066.02l-76.694 76.674c-9.788 9.788-23.332 15.413-37.172 15.413H80.782L22.758 310.62c-30.344-30.345-30.344-79.524 0-109.868"/></g></svg></svg>
+  </div>
+
+  <div class="spacer-line"></div>
+
+  <!-- REVIEWS -->
+  <div class="section-pad" style="margin-bottom: 10px;">
+    <div class="section-title">Avaliações ★ 4.9</div>
+  </div>
+
+  <div class="reviews-scroll">
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Comprei 5 — uma pra cada pessoa da família. Paguei no PIX e em 2 dias já estava aqui. Embalagem perfeita."</p>
+      <div class="review-author">Roberto M.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Linda demais! Todo mundo elogia. Depois da Páscoa vou usar pra colocar bijuterias. Vale muito o preço."</p>
+      <div class="review-author">Ana Paula S.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Presente perfeito. Minha sogra ficou encantada. Acabamento impecável, parece muito mais caro."</p>
+      <div class="review-author">Marcos L.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★<span style="color:#ddd;">★</span></div>
+      <p class="review-text">"Demorou 6 dias úteis pra chegar, achei um pouco lento. Mas o produto em si é lindo, bem feito e minha filha adorou. Valeu a espera."</p>
+      <div class="review-author">Juliana R.</div>
+      <div class="review-verified">✓ Compra verificada</div>
+    </div>
+  </div>
+
+  <div class="spacer-line"></div>
+
+  <!-- FAQ (only essential) -->
+  <div class="section-pad" style="padding-bottom: 0;">
+    <div class="section-title">Dúvidas</div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">O que está incluso no pedido?</div>
+      <div class="faq-a">Você recebe a Coelha Decorativa Porta-Ovos em embalagem premium pronta para presente. Os ovinhos de chocolate não estão inclusos — assim você escolhe os que preferir.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Chega antes da Páscoa?</div>
+      <div class="faq-a">Pedidos até sexta são despachados no mesmo dia. Prazo: 3 a 7 dias úteis para todo o Brasil.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Posso trocar ou devolver?</div>
+      <div class="faq-a">Sim. Se não gostar ou chegar com defeito, devolvemos seu dinheiro ou reenviamos sem custo. Sem burocracia. Aceitamos PIX e cartão (até 3x sem juros).</div>
+    </div>
+  </div>
+
+  <!-- FINAL CTA + TIMER -->
+  <div class="final-cta" id="finalCta">
+    <div style="padding: 24px 20px 22px; margin: 0 20px; background: #fff; border-radius: 14px; border: 1px solid #e8e8e8; box-shadow: 0 2px 12px rgba(0,0,0,0.05);">
+      <div class="final-title">Garanta a sua antes que acabe</div>
+      <p class="final-sub">Estoque limitado — edição de Páscoa 2026</p>
+
+      <div class="timer-wrap">
+        <div class="timer-box">
+          <div class="timer-value" id="timerMin">10</div>
+          <div class="timer-label">min</div>
+        </div>
+        <span class="timer-sep">:</span>
+        <div class="timer-box">
+          <div class="timer-value" id="timerSec">00</div>
+          <div class="timer-label">seg</div>
+        </div>
+      </div>
+      <p class="timer-notice">Preço promocional expira em breve</p>
+
+      <a href="#" class="cta-button" style="margin: 0;">Comprar agora</a>
+      <p class="cta-sub" style="padding: 6px 0 0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Checkout seguro · Dados protegidos
+      </p>
+      <!-- PAYMENT ICONS -->
+      <div class="payment-flags" style="margin-top:12px;">
+        <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><path d="M17.4 18.2l1.7-10.4h2.7l-1.7 10.4h-2.7zm11.3-10.1c-.5-.2-1.4-.4-2.4-.4-2.7 0-4.5 1.4-4.5 3.4 0 1.5 1.3 2.3 2.4 2.8 1 .5 1.4.8 1.4 1.3 0 .7-.8 1-1.6 1-.9 0-1.7-.2-2.5-.5l-.4-.2-.4 2.3c.7.3 1.9.5 3.2.5 2.8 0 4.7-1.4 4.7-3.5 0-1.2-.7-2.1-2.2-2.8-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.9 0 1.5.2 2 .4l.2.1.5-2.2zm6.7-.3h-2.1c-.6 0-1.1.2-1.4.9l-3.9 9.5h2.8l.6-1.5h3.4l.3 1.5h2.4l-2.1-10.4zm-3.3 6.7l1.1-3 .3-.9.2.8.6 3.1h-2.2zM16 7.8l-2.5 7.1-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 9.1h2.8l4.2-10.6H16z" fill="#1A1F71"/><path d="M11.5 7.8H7.4l0 .2c3.3.8 5.5 2.9 6.4 5.4l-.9-4.7c-.2-.7-.7-.9-1.4-.9z" fill="#F7A600"/></svg>
+        <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><circle cx="17" cy="14" r="7.5" fill="#EB001B"/><circle cx="25" cy="14" r="7.5" fill="#F79E1B"/><path d="M21 8.1a7.5 7.5 0 010 11.8 7.5 7.5 0 010-11.8z" fill="#FF5F00"/></svg>
+        <svg width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><svg x="11" y="4" width="20" height="20" viewBox="0 0 512 512"><g fill="#4BB8A9" fill-rule="evenodd"><path d="M112.57 391.19c20.056 0 38.928-7.808 53.12-22l76.693-76.692c5.385-5.404 14.765-5.384 20.15 0l76.989 76.989c14.191 14.172 33.045 21.98 53.12 21.98h15.098l-97.138 97.139c-30.326 30.344-79.505 30.344-109.85 0l-97.415-97.416h9.232zm280.068-271.294c-20.056 0-38.929 7.809-53.12 22l-76.97 76.99c-5.551 5.53-14.6 5.568-20.15-.02l-76.711-76.693c-14.192-14.191-33.046-21.999-53.12-21.999h-9.234l97.416-97.416c30.344-30.344 79.523-30.344 109.867 0l97.138 97.138h-15.116z"/><path d="M22.758 200.753l58.024-58.024h31.787c13.84 0 27.384 5.605 37.172 15.394l76.694 76.693c7.178 7.179 16.596 10.768 26.033 10.768 9.417 0 18.854-3.59 26.014-10.75l76.989-76.99c9.787-9.787 23.331-15.393 37.171-15.393h37.654l58.3 58.302c30.343 30.344 30.343 79.523 0 109.867l-58.3 58.303H392.64c-13.84 0-27.384-5.605-37.171-15.394l-76.97-76.99c-13.914-13.894-38.172-13.894-52.066.02l-76.694 76.674c-9.788 9.788-23.332 15.413-37.172 15.413H80.782L22.758 310.62c-30.344-30.345-30.344-79.524 0-109.868"/></g></svg></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <!-- Selo de garantia -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;color:#999;font-size:11px;font-weight:600;">
+      <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="#2CB67D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      7 dias de garantia · Compra 100% segura
+    </div>
+
+    <!-- Links legais -->
+    <div class="footer-links">
+      <a href="/privacy">Politica de Privacidade</a>
+      <span class="footer-sep">·</span>
+      <a href="/terms">Termos de Uso</a>
+      <span class="footer-sep">·</span>
+      <a href="/refund">Trocas e Devoluções</a>
+      <span class="footer-sep">·</span>
+      <a href="/contact">Contato</a>
+    </div>
+
+    <!-- Disclaimers obrigatorios -->
+    <div class="footer-disclaimers">
+      <p>* Os depoimentos exibidos nesta pagina representam experiencias individuais de clientes reais. Resultados podem variar de pessoa para pessoa. Nao garantimos resultados identicos.</p>
+      <p>* As imagens sao meramente ilustrativas. O produto pode apresentar pequenas variacoes de cor e acabamento em relacao as fotos.</p>
+      <p>* Estoque sujeito a disponibilidade. Precos e condicoes de pagamento validos enquanto durarem os estoques.</p>
+      <p>Este site nao e afiliado, endossado ou patrocinado pelo Facebook, Instagram, Google ou qualquer outra plataforma. Ao acessar este site, voce concorda com nossa <a href="/privacy">Politica de Privacidade</a> e <a href="/terms">Termos de Uso</a>.</p>
+    </div>
+
+    <p style="font-size:8px;color:#ddd;margin-top:6px;">© 2026 Braza Publishing Marketing LTDA. Todos os direitos reservados.</p>
+  </div>
+
+</div>
+
+<!-- STICKY -->
+<div class="sticky-bottom hidden" id="stickyBottom">
+  <div class="sticky-inner">
+    <div class="sticky-left">
+      <div class="sticky-price">R$ 79,90</div>
+      <div class="sticky-lock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Compra protegida
+      </div>
+    </div>
+    <a href="#" class="cta-button" style="flex:1;">Comprar agora</a>
+  </div>
+</div>
+
+<!-- SOCIAL PROOF TOAST -->
+<div class="social-toast" id="socialToast">
+  <div class="social-toast-avatar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </div>
+  <div>
+    <div class="social-toast-text" id="toastText"></div>
+    <div class="social-toast-time" id="toastTime"></div>
+  </div>
+</div>
+
+<script>
+  // Carousel
+  const track = document.getElementById('carouselTrack');
+  const dots = document.querySelectorAll('.carousel-dot');
+  const total = document.querySelectorAll('.carousel-slide').length;
+  let cur = 0, startX = 0, dragging = false;
+
+  function goTo(i) {
+    if (total <= 1) return;
+    if (i < 0) i = total - 1;
+    if (i >= total) i = 0;
+    cur = i;
+    track.style.transform = `translateX(-${cur * 100}%)`;
+    dots.forEach((d, j) => d.classList.toggle('active', j === cur));
+  }
+
+  dots.forEach(d => d.onclick = () => goTo(+d.dataset.index));
+
+  const car = document.getElementById('carousel');
+  // Touch (mobile)
+  car.addEventListener('touchstart', e => { startX = e.touches[0].clientX; dragging = true; });
+  car.addEventListener('touchend', e => {
+    if (!dragging) return;
+    const d = startX - e.changedTouches[0].clientX;
+    if (Math.abs(d) > 50) d > 0 ? goTo(cur + 1) : goTo(cur - 1);
+    dragging = false;
+  });
+
+  // Arrow buttons (desktop + mobile)
+  document.getElementById('arrowLeft').addEventListener('click', () => goTo(cur - 1));
+  document.getElementById('arrowRight').addEventListener('click', () => goTo(cur + 1));
+
+  // Sticky
+  const sticky = document.getElementById('stickyBottom');
+  const header = document.querySelector('.product-header');
+  const finalCta = document.getElementById('finalCta');
+  let hVis = true, fVis = false;
+
+  new IntersectionObserver(e => { hVis = e[0].isIntersecting; up(); }, { threshold: 0 }).observe(header);
+  new IntersectionObserver(e => { fVis = e[0].isIntersecting; up(); }, { threshold: 0.2 }).observe(finalCta);
+
+  function up() { sticky.classList.toggle('hidden', hVis || fVis); }
+
+  // Timer — persists in localStorage
+  const TIMER_KEY = 'lp_timer_end';
+  let timerEnd = localStorage.getItem(TIMER_KEY);
+  if (!timerEnd || Number(timerEnd) <= Date.now()) {
+    timerEnd = Date.now() + 10 * 60 * 1000;
+    localStorage.setItem(TIMER_KEY, timerEnd);
+  }
+  const tM = document.getElementById('timerMin');
+  const tS = document.getElementById('timerSec');
+
+  function tick() {
+    let tl = Math.max(0, Math.floor((Number(timerEnd) - Date.now()) / 1000));
+    tM.textContent = String(Math.floor(tl / 60)).padStart(2, '0');
+    tS.textContent = String(tl % 60).padStart(2, '0');
+    if (tl <= 0) clearInterval(ti);
+  }
+
+  tick();
+  const ti = setInterval(tick, 1000);
+
+  // Sold counter — persists in localStorage
+  const SOLD_KEY = 'lp_sold_count';
+  const SOLD_TS_KEY = 'lp_sold_ts';
+  let savedSold = localStorage.getItem(SOLD_KEY);
+  let savedTs = localStorage.getItem(SOLD_TS_KEY);
+  // Reset if older than 1 hour
+  if (!savedSold || !savedTs || (Date.now() - Number(savedTs)) > 3600000) {
+    savedSold = 243;
+    localStorage.setItem(SOLD_KEY, savedSold);
+    localStorage.setItem(SOLD_TS_KEY, Date.now());
+  }
+  let sold = Number(savedSold);
+  const soldEl = document.getElementById('soldCount');
+  soldEl.textContent = sold;
+  const stockText = document.getElementById('stockText');
+  const stockFill = document.querySelector('.stock-fill');
+  const stockBar = document.querySelector('.stock-bar');
+
+  const boltSvg = '<svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+  const fireSvg = '<svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1012 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"/></svg>';
+
+  function getRemaining() { return Math.max(5, 100 - (sold - 243)); }
+
+  function updateStockUI() {
+    const remaining = getRemaining();
+    const pct = Math.max(5, remaining * 0.18);
+    stockFill.style.width = pct + '%';
+    if (remaining < 30) {
+      stockText.innerHTML = fireSvg + 'Quase esgotado — restam apenas ' + remaining + ' unidades';
+    } else {
+      stockText.innerHTML = boltSvg + 'Restam poucas unidades';
+    }
+  }
+
+  // Init stock bar on load
+  updateStockUI();
+
+  function incrementSold() {
+    sold++;
+    soldEl.textContent = sold;
+    localStorage.setItem(SOLD_KEY, sold);
+
+    // Pulse animation on stock bar
+    stockBar.classList.remove('pulse');
+    void stockBar.offsetWidth; // force reflow to restart animation
+    stockBar.classList.add('pulse');
+    setTimeout(() => stockBar.classList.remove('pulse'), 700);
+
+    updateStockUI();
+
+    // Show toast synced with sale
+    showToast();
+  }
+
+  // Interval increases as stock drops (starts fast, slows down)
+  function scheduleNext() {
+    const remaining = getRemaining();
+    // More stock = faster sales (8-15s), less stock = slower (20-45s)
+    const minDelay = remaining > 50 ? 8 : remaining > 20 ? 15 : 25;
+    const maxDelay = remaining > 50 ? 18 : remaining > 20 ? 30 : 50;
+    const delay = (Math.random() * (maxDelay - minDelay) + minDelay) * 1000;
+    setTimeout(() => { incrementSold(); scheduleNext(); }, delay);
+  }
+
+  scheduleNext();
+
+  // Social proof toast
+  const toastPeople = [
+    { name: 'Maria', city: 'São Paulo, SP' },
+    { name: 'Fernanda', city: 'Rio de Janeiro, RJ' },
+    { name: 'Lucas', city: 'Belo Horizonte, MG' },
+    { name: 'Carla', city: 'Curitiba, PR' },
+    { name: 'Amanda', city: 'Brasília, DF' },
+    { name: 'Patrícia', city: 'Salvador, BA' },
+    { name: 'Rafael', city: 'Porto Alegre, RS' },
+    { name: 'Juliana', city: 'Recife, PE' },
+  ];
+
+  const toast = document.getElementById('socialToast');
+  const toastText = document.getElementById('toastText');
+  const toastTime = document.getElementById('toastTime');
+
+  // Viewing now — oscillates between 15-35
+  const viewingEl = document.getElementById('viewingCount');
+  let viewing = 23;
+  setInterval(() => {
+    viewing += Math.floor(Math.random() * 5) - 2; // -2 to +2
+    viewing = Math.max(15, Math.min(35, viewing));
+    viewingEl.textContent = viewing;
+  }, 5000);
+
+  let toastTimeout = null;
+
+  function showToast() {
+    const p = toastPeople[Math.floor(Math.random() * toastPeople.length)];
+    toastText.innerHTML = '<strong>' + p.name + '</strong> de ' + p.city + ' acabou de comprar';
+    toastTime.textContent = 'agora mesmo';
+    // Clear any existing timeout to avoid overlap
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toast.classList.add('show');
+    toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+</script>
+
+</body>
+</html>

@@ -9,54 +9,54 @@ export default function PrivacyPage() {
 
         <div className="space-y-4 text-[13px] text-zinc-400 leading-relaxed">
           <p>
-            O BrazaChat coleta dados limitados durante o uso dos links de
-            rastreamento de campanhas publicitarias, em conformidade com a Lei
-            Geral de Protecao de Dados (LGPD — Lei 13.709/2018).
+            O braza.commerce coleta dados limitados durante o uso da plataforma
+            de criacao de landing pages, em conformidade com a Lei Geral de
+            Protecao de Dados (LGPD — Lei 13.709/2018).
           </p>
 
           <h2 className="text-[15px] font-semibold text-white">Dados coletados</h2>
           <ul className="list-disc pl-5 space-y-1">
-            <li>Identificador de clique do Facebook (fbclid)</li>
-            <li>Endereco IP</li>
-            <li>User Agent do navegador</li>
-            <li>Parametros UTM da campanha</li>
-            <li>Timestamp do clique</li>
+            <li>Imagens de produto enviadas pelo usuario (upload)</li>
+            <li>Conteudo textual gerado por inteligencia artificial</li>
+            <li>Dados de navegacao (IP, User Agent)</li>
+            <li>Informacoes de produto (preco, descricao, URL de checkout)</li>
           </ul>
 
           <h2 className="text-[15px] font-semibold text-white">Finalidade</h2>
           <p>
-            Os dados sao utilizados exclusivamente para rastreamento de
-            conversoes publicitarias e otimizacao de campanhas na plataforma
-            Meta (Facebook/Instagram), conforme requisitos da Meta Conversion
-            API.
+            Os dados sao utilizados exclusivamente para a geracao de landing
+            pages de produto com inteligencia artificial, permitindo ao usuario
+            criar paginas de venda profissionais a partir de fotos de produto.
           </p>
 
           <h2 className="text-[15px] font-semibold text-white">
-            Compartilhamento
+            Servicos de IA
           </h2>
           <p>
-            Dados pessoais (telefone, email) sao normalizados e criptografados
-            com SHA-256 antes de qualquer envio para a Meta Conversion API.
-            Nenhum dado pessoal e compartilhado em texto aberto com terceiros.
+            As imagens enviadas sao processadas por servicos de inteligencia
+            artificial (Anthropic Claude e Google Gemini) para gerar conteudo
+            textual e imagens profissionais. Esses servicos recebem apenas as
+            imagens necessarias para a geracao e nao armazenam dados pessoais.
           </p>
 
           <h2 className="text-[15px] font-semibold text-white">Retencao</h2>
           <p>
-            Dados de cliques e mensagens sao retidos por 12 meses. Dados de
-            analytics por 24 meses. Apos esse periodo, sao removidos
-            automaticamente.
+            Imagens e conteudo gerado sao retidos enquanto a pagina estiver
+            ativa na plataforma. Ao deletar uma pagina, todos os dados
+            associados (imagens, textos, configuracoes) sao removidos
+            permanentemente.
           </p>
 
           <h2 className="text-[15px] font-semibold text-white">Seus direitos</h2>
           <p>
             Voce tem direito a solicitar acesso, correcao ou exclusao dos seus
             dados pessoais a qualquer momento, conforme previsto na LGPD.
-            Entre em contato pelo email: privacidade@brazachat.shop
+            Entre em contato pelo email: contato@brazacommerce.com
           </p>
         </div>
 
         <p className="text-[10px] text-zinc-700">
-          Ultima atualizacao: Março 2026
+          Ultima atualizacao: Marco 2026
         </p>
       </div>
       </div>
