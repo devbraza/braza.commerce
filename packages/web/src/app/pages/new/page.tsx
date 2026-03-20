@@ -385,10 +385,10 @@ export default function NewPagePage() {
           <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
             <h2 className="text-white font-semibold mb-2">Pagina publicada!</h2>
             <p className="text-emerald-500 text-sm mt-2">
-              {typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : ''}/p/{publishedSlug}
+              {API_URL}/p/{publishedSlug}
             </p>
             <div className="mt-6 flex gap-3 justify-center">
-              <a href={`${typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : ''}/p/${publishedSlug}`}
+              <a href={`${API_URL}/p/${publishedSlug}`}
                 target="_blank" className="px-6 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600">
                 Ver pagina
               </a>
