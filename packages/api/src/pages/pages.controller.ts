@@ -101,8 +101,8 @@ export class PagesController {
     if (!page) throw new BadRequestException('Page not found');
 
     const webpBuffer = await sharp(file.buffer)
-      .resize(800, null, { withoutEnlargement: true })
-      .webp({ quality: 85 })
+      .resize(640, null, { withoutEnlargement: true })
+      .webp({ quality: 80 })
       .toBuffer();
 
     const url = await this.upload.saveBuffer(id, 'reference.webp', webpBuffer);
@@ -132,8 +132,8 @@ export class PagesController {
 
     const position = page.images.length + 1;
     const webpBuffer = await sharp(file.buffer)
-      .resize(800, null, { withoutEnlargement: true })
-      .webp({ quality: 85 })
+      .resize(640, null, { withoutEnlargement: true })
+      .webp({ quality: 80 })
       .toBuffer();
 
     const filename = `${position}.webp`;
