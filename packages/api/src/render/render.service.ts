@@ -166,7 +166,7 @@ export class RenderService {
 
   private renderStars(count: number): string {
     const full = '★'.repeat(Math.min(count, 5));
-    const empty = count < 5 ? `<span style="color:#ddd;">${'★'.repeat(5 - count)}</span>` : '';
+    const empty = count < 5 ? `<span style="color:#767676;" aria-hidden="true">${'★'.repeat(5 - count)}</span>` : '';
     return full + empty;
   }
 

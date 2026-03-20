@@ -372,7 +372,7 @@
       justify-content: center;
       font-size: 11px;
       font-weight: 700;
-      color: #888;
+      color: #555;
       flex-shrink: 0;
     }
 
@@ -406,7 +406,7 @@
     .trust-pill:last-child { border-right: none; }
     .trust-pill-icon { margin-bottom: 4px; display: flex; align-items: center; justify-content: center; }
     .trust-pill-icon svg { width: 16px; height: 16px; color: #2CB67D; }
-    .trust-pill-label { font-size: 9px; font-weight: 600; color: #888; line-height: 1.3; }
+    .trust-pill-label { font-size: 9px; font-weight: 600; color: #555; line-height: 1.3; }
 
     /* ===== SPACER ===== */
     .spacer { height: 20px; }
@@ -484,6 +484,11 @@
       align-items: center;
       justify-content: space-between;
       user-select: none;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
     }
 
     .faq-q::after {
@@ -494,7 +499,7 @@
     }
 
     .faq-item.open .faq-q::after { content: '−'; color: #666; }
-    .faq-a { font-size: 12px; line-height: 1.6; color: #888; padding: 0 0 12px; display: none; }
+    .faq-a { font-size: 12px; line-height: 1.6; color: #666; padding: 0 0 12px; display: none; }
     .faq-item.open .faq-a { display: block; }
 
     /* ===== FINAL CTA ===== */
@@ -534,7 +539,7 @@
 
     .timer-value { font-size: 24px; font-weight: 800; color: #111; line-height: 1; }
     .timer-label { font-size: 8px; font-weight: 600; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
-    .timer-sep { font-size: 18px; font-weight: 700; color: #ddd; }
+    .timer-sep { font-size: 18px; font-weight: 700; color: #767676; }
     .timer-notice { font-size: 10px; color: #767676; margin-bottom: 16px; }
 
     /* ===== FOOTER ===== */
@@ -566,7 +571,7 @@
       font-size: 10px;
     }
 
-    .footer-sep { color: #ddd; }
+    .footer-sep { color: #767676; }
 
     /* ===== STICKY ===== */
     .sticky-bottom {
@@ -629,7 +634,7 @@
   </div>
 
   <!-- CAROUSEL -->
-  <div class="carousel" id="carousel">
+  <div class="carousel" id="carousel" role="region" aria-label="Fotos do produto">
     <div class="carousel-track" id="carouselTrack">
       {{carousel_slides}}
     </div>
@@ -825,15 +830,15 @@
   <div class="section-pad" style="padding-bottom: 0;">
     <div class="section-title">Dúvidas</div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">{{faq_0_question}}</div>
+      <button type="button" class="faq-q" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">{{faq_0_question}}</button>
       <div class="faq-a">{{faq_0_answer}}</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">{{faq_1_question}}</div>
+      <button type="button" class="faq-q" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">{{faq_1_question}}</button>
       <div class="faq-a">{{faq_1_answer}}</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">{{faq_2_question}}</div>
+      <button type="button" class="faq-q" onclick="this.parentElement.classList.toggle('open')" aria-expanded="false">{{faq_2_question}}</button>
       <div class="faq-a">{{faq_2_answer}}</div>
     </div>
   </div>
@@ -873,7 +878,7 @@
 
   <div class="footer">
     <!-- Selo de garantia -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;color:#999;font-size:11px;font-weight:600;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;color:#666;font-size:11px;font-weight:600;">
       <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="#2CB67D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
       7 dias de garantia · Compra 100% segura
     </div>
@@ -897,7 +902,7 @@
       <p>Este site nao e afiliado, endossado ou patrocinado pelo Facebook, Instagram, Google ou qualquer outra plataforma. Ao acessar este site, voce concorda com nossa <a href="/privacy">Politica de Privacidade</a> e <a href="/terms">Termos de Uso</a>.</p>
     </div>
 
-    <p style="font-size:8px;color:#ddd;margin-top:6px;">© 2026 Braza Publishing Marketing LTDA. Todos os direitos reservados.</p>
+    <p style="font-size:8px;color:#767676;margin-top:6px;">© 2026 Braza Publishing Marketing LTDA. Todos os direitos reservados.</p>
   </div>
 
 </div>
