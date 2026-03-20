@@ -169,7 +169,7 @@
     }
 
     .rating-stars { color: #f59e0b; font-size: 12px; letter-spacing: 1px; }
-    .rating-count { font-size: 11px; color: #999; }
+    .rating-count { font-size: 11px; color: #666; }
 
     .viewing-now {
       display: flex;
@@ -207,7 +207,7 @@
       border-radius: 4px;
     }
 
-    .price-installments { font-size: 11px; color: #999; margin-bottom: 18px; }
+    .price-installments { font-size: 11px; color: #666; margin-bottom: 18px; }
 
     /* ===== STOCK BAR ===== */
     .stock-bar {
@@ -330,7 +330,7 @@
 
     .social-toast-text { font-size: 11px; line-height: 1.4; color: #333; }
     .social-toast-text strong { font-weight: 700; }
-    .social-toast-time { font-size: 9px; color: #aaa; margin-top: 1px; }
+    .social-toast-time { font-size: 9px; color: #767676; margin-top: 1px; }
 
     @media (min-width: 481px) {
       .social-toast { bottom: 24px; left: 24px; }
@@ -339,7 +339,7 @@
     .cta-sub {
       text-align: center;
       font-size: 10px;
-      color: #aaa;
+      color: #767676;
       padding: 6px 20px 0;
       display: flex;
       align-items: center;
@@ -347,7 +347,7 @@
       gap: 4px;
     }
 
-    .cta-sub svg { width: 10px; height: 10px; color: #bbb; flex-shrink: 0; }
+    .cta-sub svg { width: 10px; height: 10px; color: #767676; flex-shrink: 0; }
 
     .payment-flags { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
 
@@ -386,7 +386,7 @@
       color: #666;
     }
 
-    .mini-review-author { font-size: 10px; color: #aaa; margin-top: 2px; }
+    .mini-review-author { font-size: 10px; color: #767676; margin-top: 2px; }
 
     /* ===== TRUST PILLS ===== */
     .trust-pills {
@@ -490,10 +490,10 @@
       content: '+';
       font-size: 16px;
       font-weight: 400;
-      color: #ccc;
+      color: #767676;
     }
 
-    .faq-item.open .faq-q::after { content: '−'; color: #999; }
+    .faq-item.open .faq-q::after { content: '−'; color: #666; }
     .faq-a { font-size: 12px; line-height: 1.6; color: #888; padding: 0 0 12px; display: none; }
     .faq-item.open .faq-a { display: block; }
 
@@ -512,7 +512,7 @@
       letter-spacing: -0.02em;
     }
 
-    .final-sub { font-size: 11px; color: #999; margin-bottom: 16px; }
+    .final-sub { font-size: 11px; color: #666; margin-bottom: 16px; }
 
     /* ===== TIMER ===== */
     .timer-wrap {
@@ -533,13 +533,13 @@
     }
 
     .timer-value { font-size: 24px; font-weight: 800; color: #111; line-height: 1; }
-    .timer-label { font-size: 8px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+    .timer-label { font-size: 8px; font-weight: 600; color: #767676; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
     .timer-sep { font-size: 18px; font-weight: 700; color: #ddd; }
-    .timer-notice { font-size: 10px; color: #bbb; margin-bottom: 16px; }
+    .timer-notice { font-size: 10px; color: #767676; margin-bottom: 16px; }
 
     /* ===== FOOTER ===== */
-    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #bbb; background: #f4f4f5; }
-    .footer a { color: #999; text-decoration: underline; }
+    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #767676; background: #f4f4f5; }
+    .footer a { color: #666; text-decoration: underline; }
     .footer a:hover { color: #666; }
 
     .footer-disclaimers {
@@ -552,7 +552,7 @@
     .footer-disclaimers p {
       font-size: 9px;
       line-height: 1.5;
-      color: #bbb;
+      color: #767676;
       margin-bottom: 8px;
     }
 
@@ -595,7 +595,7 @@
 
     .sticky-lock {
       display: flex; align-items: center; gap: 3px;
-      font-size: 9px; color: #bbb; margin-top: 1px;
+      font-size: 9px; color: #767676; margin-top: 1px;
     }
 
     .sticky-lock svg { width: 9px; height: 9px; }
@@ -633,8 +633,8 @@
     <div class="carousel-track" id="carouselTrack">
       {{carousel_slides}}
     </div>
-    <button class="carousel-arrow left" id="arrowLeft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <button class="carousel-arrow right" id="arrowRight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
+    <button class="carousel-arrow left" id="arrowLeft" aria-label="Foto anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="carousel-arrow right" id="arrowRight" aria-label="Proxima foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
     <div class="carousel-dots" id="carouselDots">
       {{carousel_dots}}
     </div>
