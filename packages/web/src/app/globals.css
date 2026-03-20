@@ -63,3 +63,20 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 .stat-number { animation: countUp 0.4s ease-out; }
+
+/* Shimmer border animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer-border {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Sidebar scrollbar */
+aside::-webkit-scrollbar { width: 4px; }
+aside::-webkit-scrollbar-track { background: transparent; }
+aside::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.06); border-radius: 2px; }
+aside::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.12); }

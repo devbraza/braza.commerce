@@ -1,6 +1,6 @@
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-[#09090b] p-6 text-[#fafafa]">
+    <div>
       <div className="max-w-5xl mx-auto">
       <div className="mx-auto max-w-2xl space-y-6">
         <h1 className="text-xl font-bold tracking-tight text-white">

@@ -6,177 +6,394 @@ import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+interface GeneratedContent {
+  name: string;
+  brand: string;
+  description: string;
+  features: string[];
+  reviews: { stars: number; text: string; author: string; verified: boolean }[];
+  faq: { question: string; answer: string }[];
+  miniReview: { initials: string; stars: number; text: string; author: string };
+}
+
+interface UploadedImage {
+  file: File;
+  preview: string;
+  url?: string;
+}
+
 export default function NewPagePage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [pageId, setPageId] = useState<string | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<UploadedImage[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [price, setPrice] = useState('');
   const [originalPrice, setOriginalPrice] = useState('');
   const [checkoutUrl, setCheckoutUrl] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [images, setImages] = useState<{ url: string; position: number }[]>([]);
-  const [content, setContent] = useState<Record<string, unknown> | null>(null);
+  const [content, setContent] = useState<GeneratedContent | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [customSlug, setCustomSlug] = useState('');
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleUpload = async (file: File) => {
-    setPreview(URL.createObjectURL(file));
+  // Photo management
+  const addPhotos = (files: FileList) => {
+    const remaining = 6 - photos.length;
+    const newPhotos = Array.from(files).slice(0, remaining).map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPhotos([...photos, ...newPhotos]);
+  };
 
-    // Create page first
-    const page = await apiFetch<{ id: string }>('/pages', {
-      method: 'POST',
-      body: JSON.stringify({
-        price: price ? Number(price) : undefined,
-        originalPrice: originalPrice ? Number(originalPrice) : undefined,
-        checkoutUrl: checkoutUrl || undefined,
-      }),
-    });
-    setPageId(page.id);
+  const removePhoto = (index: number) => {
+    setPhotos(photos.filter((_, i) => i !== index));
+  };
 
-    // Upload reference
-    const form = new FormData();
-    form.append('file', file);
-    await fetch(`${API_URL}/pages/${page.id}/reference`, { method: 'POST', body: form });
+  const movePhoto = (from: number, to: number) => {
+    if (to < 0 || to >= photos.length) return;
+    const updated = [...photos];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(to, 0, moved);
+    setPhotos(updated);
+  };
 
-    // Update price/checkout if set
-    if (price || originalPrice || checkoutUrl) {
-      await apiFetch(`/pages/${page.id}`, {
-        method: 'PATCH',
+  // Step 1 → Step 2: Create page + upload all photos + generate copy
+  const handleGenerate = async () => {
+    if (photos.length === 0) return alert('Adicione pelo menos 1 foto');
+    setUploading(true);
+    setGenerating(true);
+
+    try {
+      // 1. Create page
+      const page = await apiFetch<{ id: string }>('/pages', {
+        method: 'POST',
         body: JSON.stringify({
           price: price ? Number(price) : undefined,
           originalPrice: originalPrice ? Number(originalPrice) : undefined,
           checkoutUrl: checkoutUrl || undefined,
         }),
       });
-    }
-  };
+      setPageId(page.id);
 
-  const generate = async () => {
-    if (!pageId) return;
-    setGenerating(true);
-    try {
-      const [imgRes, copyRes] = await Promise.all([
-        apiFetch<{ images: { url: string; position: number }[] }>(`/pages/${pageId}/generate-images`, { method: 'POST' }),
-        apiFetch<{ content: Record<string, unknown> }>(`/pages/${pageId}/generate-copy`, { method: 'POST' }),
-      ]);
-      setImages(imgRes.images);
+      // 2. Upload first photo as reference (for AI analysis)
+      const refForm = new FormData();
+      refForm.append('file', photos[0].file);
+      const refRes = await fetch(`${API_URL}/pages/${page.id}/reference`, { method: 'POST', body: refForm });
+      if (!refRes.ok) throw new Error('Erro no upload da foto de referencia');
+
+      // 3. Upload all photos as page images
+      const uploadedPhotos: UploadedImage[] = [];
+      for (let i = 0; i < photos.length; i++) {
+        const form = new FormData();
+        form.append('file', photos[i].file);
+        const res = await fetch(`${API_URL}/pages/${page.id}/images`, { method: 'POST', body: form });
+        if (res.ok) {
+          const data = await res.json();
+          uploadedPhotos.push({ ...photos[i], url: data.url });
+        } else {
+          uploadedPhotos.push(photos[i]);
+        }
+      }
+      setPhotos(uploadedPhotos);
+
+      // 4. Generate copy with AI (texts only)
+      const copyRes = await apiFetch<{ content: GeneratedContent }>(`/pages/${page.id}/generate-copy`, { method: 'POST' });
       setContent(copyRes.content);
-      setStep(3);
+      setStep(2);
     } catch (err) {
-      alert('Erro ao gerar: ' + (err as Error).message);
+      alert('Erro: ' + (err as Error).message);
     }
+    setUploading(false);
     setGenerating(false);
   };
 
-  const publish = async () => {
+  // Slug management
+  const slugify = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-/, '');
+
+  const handleSlugChange = (value: string) => {
+    const sanitized = slugify(value);
+    setCustomSlug(sanitized);
+    setSlugAvailable(null);
+    if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
+    if (sanitized.length >= 3) {
+      setCheckingSlug(true);
+      slugTimerRef.current = setTimeout(async () => {
+        try {
+          const res = await apiFetch<{ available: boolean }>(`/pages/check-slug/${sanitized}`);
+          setSlugAvailable(res.available);
+        } catch {
+          setSlugAvailable(null);
+        }
+        setCheckingSlug(false);
+      }, 300);
+    } else {
+      setCheckingSlug(false);
+    }
+  };
+
+  // Content editing
+  const updateField = (field: string, value: string) => {
+    if (!content) return;
+    setContent({ ...content, [field]: value });
+  };
+
+  const updateFeature = (index: number, value: string) => {
+    if (!content) return;
+    const features = [...content.features];
+    features[index] = value;
+    setContent({ ...content, features });
+  };
+
+  const updateReview = (index: number, field: string, value: string | number) => {
+    if (!content) return;
+    const reviews = [...content.reviews];
+    reviews[index] = { ...reviews[index], [field]: value };
+    setContent({ ...content, reviews });
+  };
+
+  const updateFaq = (index: number, field: string, value: string) => {
+    if (!content) return;
+    const faq = [...content.faq];
+    faq[index] = { ...faq[index], [field]: value };
+    setContent({ ...content, faq });
+  };
+
+  const saveContent = async () => {
+    if (!pageId || !content) return;
+    setSaving(true);
+    try {
+      await apiFetch(`/pages/${pageId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ userEditedContent: content }),
+      });
+      setStep(3);
+    } catch (err) {
+      alert('Erro ao salvar: ' + (err as Error).message);
+    }
+    setSaving(false);
+  };
+
+  const publishWithSlug = async () => {
     if (!pageId) return;
-    const res = await apiFetch<{ slug: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
-    setPublishedSlug(res.slug);
-    setStep(5);
+    setSaving(true);
+    try {
+      if (customSlug.length >= 3) {
+        await apiFetch(`/pages/${pageId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ slug: customSlug }),
+        });
+      }
+      const res = await apiFetch<{ slug: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
+      setPublishedSlug(res.slug);
+      setStep(4);
+    } catch (err) {
+      alert('Erro ao publicar: ' + (err as Error).message);
+    }
+    setSaving(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#09090b] p-6">
+    <div>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold text-white mb-8">Nova pagina</h1>
+        <h1 className="text-xl font-bold text-white mb-8">Nova pagina</h1>
 
-        {/* STEP 1: Upload + Price */}
-        {step >= 1 && step < 5 && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 mb-4">
-            <h2 className="text-white font-semibold mb-4">1. Foto de referencia + dados</h2>
-            <div
-              onClick={() => fileRef.current?.click()}
-              className="border-2 border-dashed border-zinc-700 rounded-lg p-8 text-center cursor-pointer hover:border-zinc-500 transition mb-4"
-            >
-              {preview ? (
-                <img src={preview} alt="Preview" className="mx-auto max-h-48 rounded" />
-              ) : (
-                <p className="text-zinc-500">Clique ou arraste uma foto do produto</p>
-              )}
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUpload(f);
-                }}
-              />
+        {/* STEP 1: Photos + Price + Generate */}
+        {step === 1 && (
+          <div className="space-y-4">
+            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
+              <h2 className="text-white font-semibold mb-2">1. Fotos do produto</h2>
+              <p className="text-zinc-500 text-xs mb-4">Adicione ate 6 fotos. A primeira sera usada pela IA para gerar os textos.</p>
+
+              {/* Photo grid */}
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {photos.map((photo, i) => (
+                  <div key={photo.preview} className="relative group">
+                    <img src={photo.preview} alt={`Foto ${i + 1}`} className="rounded-lg w-full aspect-square object-cover border border-white/[0.06]" />
+                    <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition">
+                      <button onClick={() => removePhoto(i)} className="w-6 h-6 bg-red-600 text-white rounded-full text-xs font-bold hover:bg-red-500">X</button>
+                    </div>
+                    <div className="absolute bottom-1 left-1 right-1 flex justify-between opacity-0 group-hover:opacity-100 transition">
+                      {i > 0 && <button onClick={() => movePhoto(i, i - 1)} className="w-7 h-7 bg-black/60 text-white rounded text-xs hover:bg-white/[0.08]">←</button>}
+                      {i < photos.length - 1 && <button onClick={() => movePhoto(i, i + 1)} className="w-7 h-7 bg-black/60 text-white rounded text-xs hover:bg-white/[0.08] ml-auto">→</button>}
+                    </div>
+                    <span className="absolute top-1 left-1 bg-black/60 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded">
+                      {i === 0 ? 'Principal' : i + 1}
+                    </span>
+                  </div>
+                ))}
+
+                {photos.length < 6 && (
+                  <div
+                    onClick={() => fileRef.current?.click()}
+                    className="border-2 border-dashed border-white/[0.1] rounded-lg aspect-square flex items-center justify-center cursor-pointer hover:border-white/[0.2] transition"
+                  >
+                    <div className="text-center">
+                      <span className="text-zinc-500 text-2xl block">+</span>
+                      <span className="text-zinc-600 text-[10px]">{photos.length}/6</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden"
+                onChange={(e) => { if (e.target.files) addPhotos(e.target.files); e.target.value = ''; }} />
             </div>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <input type="number" placeholder="Preco (ex: 79.90)" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700" />
-              <input type="number" placeholder="Preco original (ex: 129.90)" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} className="bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700" />
+
+            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
+              <h2 className="text-white font-semibold mb-4">2. Dados do produto</h2>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <input type="number" placeholder="Preco de venda (ex: 79.90)" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                <input type="number" placeholder="Preco original (ex: 129.90)" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} className="bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+              </div>
+              <input type="url" placeholder="Link do checkout (ex: https://yampi.com.br/...)" value={checkoutUrl} onChange={(e) => setCheckoutUrl(e.target.value)} className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
             </div>
-            <input type="url" placeholder="URL do checkout (ex: https://yampi.com.br/...)" value={checkoutUrl} onChange={(e) => setCheckoutUrl(e.target.value)} className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700 mb-4" />
 
-            {pageId && step === 1 && (
-              <button onClick={() => setStep(2)} className="w-full py-3 bg-[#2CB67D] text-white rounded-lg font-bold hover:bg-[#239d6a] transition">
-                Continuar
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* STEP 2: Generate */}
-        {step === 2 && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 mb-4">
-            <h2 className="text-white font-semibold mb-4">2. Gerar com IA</h2>
-            <p className="text-zinc-500 text-sm mb-4">A IA vai gerar 6 imagens profissionais e todo o texto da sua pagina.</p>
-            <button onClick={generate} disabled={generating} className="w-full py-3 bg-[#2CB67D] text-white rounded-lg font-bold hover:bg-[#239d6a] transition disabled:opacity-50">
-              {generating ? 'Gerando... (pode levar ate 30s)' : 'Gerar com IA'}
+            <button onClick={handleGenerate} disabled={photos.length === 0 || uploading || generating}
+              className="w-full py-3 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition disabled:opacity-50">
+              {uploading ? 'Enviando fotos...' : generating ? 'Gerando textos com IA...' : 'Gerar pagina com IA'}
             </button>
           </div>
         )}
 
-        {/* STEP 3: Review content */}
-        {step === 3 && content && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 mb-4">
-            <h2 className="text-white font-semibold mb-4">3. Revise o conteudo</h2>
-
-            {images.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 mb-4">
-                {images.map((img) => (
-                  <img key={img.position} src={img.url} alt={`Product ${img.position}`} className="rounded-lg w-full aspect-square object-cover" />
+        {/* STEP 2: Review + Edit texts */}
+        {step === 2 && content && (
+          <div className="space-y-4">
+            {/* Photos preview */}
+            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
+              <h2 className="text-white font-semibold mb-2">Suas fotos ({photos.length})</h2>
+              <div className="grid grid-cols-6 gap-2">
+                {photos.map((photo, i) => (
+                  <img key={photo.preview} src={photo.preview} alt={`${i + 1}`} className="rounded w-full aspect-square object-cover border border-white/[0.06]" />
                 ))}
               </div>
-            )}
-
-            <div className="space-y-3 text-sm">
-              <div><span className="text-zinc-500">Nome:</span> <span className="text-white">{(content as Record<string, string>).name}</span></div>
-              <div><span className="text-zinc-500">Descricao:</span> <span className="text-zinc-300">{(content as Record<string, string>).description}</span></div>
             </div>
 
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setStep(4)} className="flex-1 py-3 bg-[#2CB67D] text-white rounded-lg font-bold hover:bg-[#239d6a] transition">
-                Preview
-              </button>
-            </div>
-          </div>
-        )}
+            {/* Text editing */}
+            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
+              <h2 className="text-white font-semibold mb-1">Textos gerados pela IA</h2>
+              <p className="text-zinc-500 text-xs mb-4">Revise e corrija o que precisar antes de publicar.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-1">Nome do produto</label>
+                  <input value={content.name} onChange={(e) => updateField('name', e.target.value)}
+                    className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                </div>
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-1">Marca / Colecao</label>
+                  <input value={content.brand} onChange={(e) => updateField('brand', e.target.value)}
+                    className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                </div>
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-1">Descricao</label>
+                  <textarea value={content.description} onChange={(e) => updateField('description', e.target.value)} rows={3}
+                    className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                </div>
 
-        {/* STEP 4: Preview + Publish */}
-        {step === 4 && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 mb-4">
-            <h2 className="text-white font-semibold mb-4">4. Publicar</h2>
-            <p className="text-zinc-500 text-sm mb-4">Sua pagina esta pronta para ser publicada.</p>
-            <button onClick={publish} className="w-full py-3 bg-[#2CB67D] text-white rounded-lg font-bold hover:bg-[#239d6a] transition">
-              Publicar agora
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-2">Features / Beneficios</label>
+                  {content.features.map((f, i) => (
+                    <input key={i} value={f} onChange={(e) => updateFeature(i, e.target.value)}
+                      className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06] mb-2" />
+                  ))}
+                </div>
+
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-2">Avaliacoes</label>
+                  {content.reviews.map((r, i) => (
+                    <div key={i} className="bg-white/[0.04] rounded-lg p-3 mb-2 border border-white/[0.06]">
+                      <div className="flex gap-2 mb-2">
+                        <select value={r.stars} onChange={(e) => updateReview(i, 'stars', Number(e.target.value))}
+                          className="bg-white/[0.06] text-white rounded px-2 py-1 text-xs border border-white/[0.08]">
+                          <option value={5}>5 estrelas</option>
+                          <option value={4}>4 estrelas</option>
+                          <option value={3}>3 estrelas</option>
+                        </select>
+                        <input value={r.author} onChange={(e) => updateReview(i, 'author', e.target.value)}
+                          className="flex-1 bg-white/[0.06] text-white rounded px-2 py-1 text-xs border border-white/[0.08]" placeholder="Nome" />
+                      </div>
+                      <textarea value={r.text} onChange={(e) => updateReview(i, 'text', e.target.value)} rows={2}
+                        className="w-full bg-white/[0.06] text-white rounded px-2 py-1 text-xs border border-white/[0.08]" />
+                    </div>
+                  ))}
+                </div>
+
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-2">FAQ</label>
+                  {content.faq.map((f, i) => (
+                    <div key={i} className="bg-white/[0.04] rounded-lg p-3 mb-2 border border-white/[0.06]">
+                      <input value={f.question} onChange={(e) => updateFaq(i, 'question', e.target.value)}
+                        className="w-full bg-white/[0.06] text-white rounded px-2 py-1 text-xs border border-white/[0.08] mb-2" placeholder="Pergunta" />
+                      <textarea value={f.answer} onChange={(e) => updateFaq(i, 'answer', e.target.value)} rows={2}
+                        className="w-full bg-white/[0.06] text-white rounded px-2 py-1 text-xs border border-white/[0.08]" placeholder="Resposta" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button onClick={saveContent} disabled={saving} className="w-full py-3 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition disabled:opacity-50">
+              {saving ? 'Salvando...' : 'Continuar'}
             </button>
           </div>
         )}
 
-        {/* STEP 5: Published */}
-        {step === 5 && publishedSlug && (
-          <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 text-center">
+        {/* STEP 3: Custom Slug */}
+        {step === 3 && (
+          <div className="space-y-4">
+            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
+              <h2 className="text-white font-semibold mb-1">URL personalizada</h2>
+              <p className="text-zinc-500 text-xs mb-4">Defina a URL da sua pagina para usar nos anuncios. Deixe vazio para usar a URL automatica.</p>
+
+              <div className="flex items-center gap-0 bg-white/[0.04] rounded-lg border border-white/[0.06] overflow-hidden">
+                <span className="text-zinc-500 text-sm px-3 py-2 bg-white/[0.02] border-r border-white/[0.06] whitespace-nowrap select-none">braza.commerce/p/</span>
+                <input
+                  type="text"
+                  value={customSlug}
+                  onChange={(e) => handleSlugChange(e.target.value)}
+                  placeholder="meu-produto"
+                  maxLength={60}
+                  className="flex-1 bg-transparent text-white px-3 py-2 text-sm outline-none"
+                />
+                {checkingSlug && <span className="text-zinc-500 text-xs px-3">...</span>}
+                {!checkingSlug && slugAvailable === true && <span className="text-emerald-500 text-xs px-3 font-semibold">Disponivel</span>}
+                {!checkingSlug && slugAvailable === false && <span className="text-red-500 text-xs px-3 font-semibold">Ja existe</span>}
+              </div>
+              {customSlug.length > 0 && customSlug.length < 3 && (
+                <p className="text-amber-500 text-xs mt-2">Minimo 3 caracteres</p>
+              )}
+            </div>
+
+            <button
+              onClick={publishWithSlug}
+              disabled={saving || (customSlug.length > 0 && (customSlug.length < 3 || slugAvailable === false))}
+              className="w-full py-3 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition disabled:opacity-50"
+            >
+              {saving ? 'Publicando...' : 'Publicar pagina'}
+            </button>
+          </div>
+        )}
+
+        {/* STEP 4: Published */}
+        {step === 4 && publishedSlug && (
+          <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
             <h2 className="text-white font-semibold mb-2">Pagina publicada!</h2>
-            <a href={`/p/${publishedSlug}`} target="_blank" className="text-[#2CB67D] underline text-sm">
-              {window.location.origin}/p/{publishedSlug}
-            </a>
-            <div className="mt-6">
-              <button onClick={() => router.push('/pages')} className="px-6 py-2 bg-zinc-800 text-zinc-300 rounded-lg text-sm hover:bg-zinc-700">
-                Voltar ao dashboard
+            <p className="text-emerald-500 text-sm mt-2">
+              {typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : ''}/p/{publishedSlug}
+            </p>
+            <div className="mt-6 flex gap-3 justify-center">
+              <a href={`${typeof window !== 'undefined' ? window.location.origin.replace(':3000', ':3001') : ''}/p/${publishedSlug}`}
+                target="_blank" className="px-6 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600">
+                Ver pagina
+              </a>
+              <button onClick={() => router.push('/pages')} className="px-6 py-2 bg-white/[0.04] text-zinc-300 rounded-lg text-sm hover:bg-white/[0.08]">
+                Dashboard
               </button>
             </div>
           </div>

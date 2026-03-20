@@ -28,7 +28,7 @@ export class RenderService {
     }
   }
 
-  render(page: Page & { images: PageImage[] }): string {
+  render(page: Page & { images: PageImage[] }, campaignId?: string, campaignCheckoutUrl?: string): string {
     const ai = (page.aiGeneratedContent || {}) as unknown as ContentData;
     const user = (page.userEditedContent || {}) as unknown as ContentData;
     const content: ContentData = { ...ai, ...user };
@@ -37,7 +37,9 @@ export class RenderService {
     const originalPrice = Number(page.originalPrice) || 0;
     const discount = originalPrice > 0 ? Math.round((1 - price / originalPrice) * 100) : 0;
     const installments = (price / 3).toFixed(2).replace('.', ',');
-    const soldCount = 150 + (parseInt(page.id.slice(-4), 16) % 250);
+    let hash = 0;
+    for (const ch of page.id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
+    const soldCount = 150 + (Math.abs(hash) % 250);
 
     let html = this.template;
 
@@ -82,11 +84,64 @@ export class RenderService {
     html = html.replace('{{mini_review_text}}', this.escape(mini.text));
     html = html.replace('{{mini_review_author}}', this.escape(mini.author));
 
+    // Override checkout URL if campaign has one
+    if (campaignCheckoutUrl) {
+      html = html.replace(/\{\{checkout_url\}\}/g, campaignCheckoutUrl);
+    }
+
     // Carousel images
     const images = page.images.sort((a, b) => a.position - b.position);
     html = this.renderCarousel(html, images);
 
+    // Inject tracking script if campaign is active
+    if (campaignId) {
+      html = this.injectTrackingScript(html, campaignId);
+    }
+
     return html;
+  }
+
+  private injectTrackingScript(html: string, campaignId: string): string {
+    const trackingScript = `
+<script>
+(function(){
+  var params = new URLSearchParams(window.location.search);
+  var fbclid = params.get('fbclid');
+  var utms = {
+    utmSource: params.get('utm_source'),
+    utmMedium: params.get('utm_medium'),
+    utmCampaign: params.get('utm_campaign'),
+    utmContent: params.get('utm_content'),
+    utmTerm: params.get('utm_term')
+  };
+  fetch('/tracking/click', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ campaignId: ${JSON.stringify(campaignId)}, fbclid: fbclid }, utms))
+  }).then(function(r){ return r.json(); }).then(function(data){
+    window.__clickId = data.clickId;
+    window.__fbclid = fbclid;
+  }).catch(function(){});
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('a[href], button');
+    if (!btn) return;
+    var href = btn.getAttribute('href') || '';
+    if (href && href !== '#' && !href.startsWith('javascript') && !href.startsWith('#')) {
+      try {
+        var url = new URL(href, window.location.origin);
+        if (url.origin !== window.location.origin) {
+          e.preventDefault();
+          if (window.__clickId) url.searchParams.set('metadata[click_id]', window.__clickId);
+          if (window.__fbclid) url.searchParams.set('metadata[fbclid]', window.__fbclid);
+          window.location.href = url.toString();
+        }
+      } catch(ex){}
+    }
+  });
+})();
+</script>`;
+    return html.replace('</body>', trackingScript + '\n</body>');
   }
 
   private renderCarousel(html: string, images: PageImage[]): string {

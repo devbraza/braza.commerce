@@ -24,12 +24,12 @@ export default function EditPagePage() {
     setSaving(false);
   };
 
-  if (!page) return <div className="flex min-h-screen items-center justify-center bg-[#09090b] text-zinc-500">Carregando...</div>;
+  if (!page) return <div className="flex items-center justify-center py-20 text-zinc-500">Carregando...</div>;
 
   const content = { ...(page.aiGeneratedContent as Record<string, unknown> || {}), ...(page.userEditedContent as Record<string, unknown> || {}) };
 
   return (
-    <div className="min-h-screen bg-[#09090b] p-6">
+    <div>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-white">Editar pagina</h1>

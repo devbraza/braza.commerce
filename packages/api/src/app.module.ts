@@ -6,6 +6,12 @@ import { PagesModule } from './pages/pages.module';
 import { AiModule } from './ai/ai.module';
 import { RenderModule } from './render/render.module';
 import { PublicModule } from './public/public.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+import { TrackingModule } from './tracking/tracking.module';
+import { CapiModule } from './capi/capi.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { SettingsModule } from './settings/settings.module';
+import { MetricsModule } from './metrics/metrics.module';
 import { PrismaService } from './common/services/prisma.service';
 
 @Module({
@@ -24,6 +30,12 @@ import { PrismaService } from './common/services/prisma.service';
     AiModule,
     RenderModule,
     PublicModule,
+    CampaignsModule,
+    TrackingModule,
+    CapiModule,
+    WebhooksModule,
+    SettingsModule,
+    MetricsModule,
   ],
   providers: [PrismaService],
   exports: [PrismaService],

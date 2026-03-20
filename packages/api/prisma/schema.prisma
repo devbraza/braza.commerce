@@ -13,6 +13,20 @@ enum PageStatus {
   ARCHIVED
 }
 
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum EventType {
+  VIEW_CONTENT
+  INITIATE_CHECKOUT
+  ADD_PAYMENT_INFO
+  PURCHASE
+  PAYMENT_REFUSED
+}
+
 model Page {
   id                 String     @id @default(cuid())
   slug               String     @unique
@@ -28,6 +42,7 @@ model Page {
   updatedAt          DateTime   @updatedAt
   publishedAt        DateTime?
   images             PageImage[]
+  campaigns          Campaign[]
 }
 
 model PageImage {
@@ -41,4 +56,68 @@ model PageImage {
   createdAt    DateTime @default(now())
 
   @@index([pageId])
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  pageId      String
+  page        Page           @relation(fields: [pageId], references: [id])
+  name        String
+  checkoutUrl String
+  pixelId     String?
+  accessToken String?
+  status      CampaignStatus @default(ACTIVE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  clicks      Click[]
+
+  @@index([pageId])
+  @@index([status])
+}
+
+model Click {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  clickId    String   @unique
+  fbclid     String?
+  fbc        String?
+  fbp        String?
+  ip         String
+  userAgent  String
+  utmSource  String?
+  utmMedium  String?
+  utmCampaign String?
+  utmContent String?
+  utmTerm    String?
+  createdAt  DateTime @default(now())
+  events     Event[]
+
+  @@index([campaignId])
+  @@index([campaignId, createdAt])
+  @@index([clickId])
+  @@index([createdAt])
+}
+
+model Event {
+  id        String    @id @default(cuid())
+  clickId   String
+  click     Click     @relation(fields: [clickId], references: [id], onDelete: Cascade)
+  type      EventType
+  value     Decimal?  @db.Decimal(10, 2)
+  currency  String?   @default("BRL")
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  @@index([clickId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Settings {
+  id                 String   @id @default("default")
+  yampiSecretKey     String?
+  defaultPixelId     String?
+  defaultAccessToken String?
+  updatedAt          DateTime @updatedAt
 }

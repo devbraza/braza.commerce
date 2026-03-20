@@ -73,16 +73,20 @@ export class PagesService {
 
   async update(id: string, dto: UpdatePageDto) {
     await this.findOne(id);
-    return this.prisma.page.update({
-      where: { id },
-      data: {
-        title: dto.title,
-        price: dto.price,
-        originalPrice: dto.originalPrice,
-        checkoutUrl: dto.checkoutUrl,
-        userEditedContent: dto.userEditedContent as Prisma.InputJsonValue,
-      },
-    });
+    const data: Record<string, unknown> = {};
+    if (dto.title !== undefined) data.title = dto.title;
+    if (dto.price !== undefined) data.price = dto.price;
+    if (dto.originalPrice !== undefined) data.originalPrice = dto.originalPrice;
+    if (dto.checkoutUrl !== undefined) data.checkoutUrl = dto.checkoutUrl;
+    if (dto.userEditedContent !== undefined) data.userEditedContent = dto.userEditedContent as Prisma.InputJsonValue;
+    if (dto.slug !== undefined) {
+      const sanitized = dto.slug.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      if (sanitized.length >= 3 && sanitized.length <= 60) {
+        const available = await this.checkSlugAvailable(sanitized, id);
+        if (available) data.slug = sanitized;
+      }
+    }
+    return this.prisma.page.update({ where: { id }, data });
   }
 
   async remove(id: string) {
@@ -120,6 +124,13 @@ export class PagesService {
       where: { id },
       data: { status: 'ARCHIVED' },
     });
+  }
+
+  async checkSlugAvailable(slug: string, excludePageId?: string): Promise<boolean> {
+    const existing = await this.prisma.page.findUnique({ where: { slug } });
+    if (!existing) return true;
+    if (excludePageId && existing.id === excludePageId) return true;
+    return false;
   }
 
   async findBySlug(slug: string) {

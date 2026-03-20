@@ -18,7 +18,7 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@brazachat/shared": ["../shared/src"]
+      "@brazacommerce/shared": ["../shared/src"]
     }
   },
   "include": ["src/**/*"],

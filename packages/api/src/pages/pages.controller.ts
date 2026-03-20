@@ -18,12 +18,12 @@ import { AiCopyService } from '../ai/ai-copy.service';
 import { AiImageService } from '../ai/ai-image.service';
 import { UploadService } from '../upload/upload.service';
 import { PrismaService } from '../common/services/prisma.service';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 import { join } from 'path';
 import { Prisma } from '@prisma/client';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/octet-stream'];
 
 @Controller('pages')
 export class PagesController {
@@ -43,6 +43,12 @@ export class PagesController {
   @Get()
   findAll() {
     return this.pages.findAll();
+  }
+
+  @Get('check-slug/:slug')
+  async checkSlug(@Param('slug') slug: string) {
+    const available = await this.pages.checkSlugAvailable(slug);
+    return { available };
   }
 
   @Get(':id')
@@ -102,6 +108,42 @@ export class PagesController {
     const url = await this.upload.saveBuffer(id, 'reference.webp', webpBuffer);
     await this.prisma.page.update({ where: { id }, data: { referenceImageUrl: url } });
     return { referenceImageUrl: url };
+  }
+
+  @Post(':id/images')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: MAX_FILE_SIZE },
+    fileFilter: (_req, file, cb) => {
+      if (ALLOWED_MIMES.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new BadRequestException(`Format not supported: ${file.mimetype}`), false);
+      }
+    },
+  }))
+  async uploadImage(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('No file uploaded');
+    const page = await this.prisma.page.findUnique({ where: { id }, include: { images: true } });
+    if (!page) throw new BadRequestException('Page not found');
+    if (page.images.length >= 6) throw new BadRequestException('Maximum 6 images');
+
+    const position = page.images.length + 1;
+    const webpBuffer = await sharp(file.buffer)
+      .resize(800, null, { withoutEnlargement: true })
+      .webp({ quality: 85 })
+      .toBuffer();
+
+    const filename = `${position}.webp`;
+    const url = await this.upload.saveBuffer(id, filename, webpBuffer);
+
+    const img = await this.prisma.pageImage.create({
+      data: { pageId: id, url, position, originalName: file.originalname || filename, sizeBytes: webpBuffer.length },
+    });
+
+    return img;
   }
 
   @Post(':id/generate-images')

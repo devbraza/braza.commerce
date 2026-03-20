@@ -57,28 +57,29 @@ Uma unica acao (upload da foto) gera uma pagina completa com:
 | FR-1.1 | Acesso direto sem login — usuario entra e comeca a criar | MUST |
 | FR-1.2 | Cadastro e login com email + senha | v2 (fora do MVP) |
 
-### FR-2: Upload e geracao com IA (2 servicos separados)
+### FR-2: Upload de fotos + geracao de textos com IA
 
-**Fluxo:** Usuario sobe 1 foto de referencia → IA gera 6 imagens profissionais + todo o conteudo textual
+**Fluxo:** Usuario sobe ate 6 fotos reais do produto → IA analisa a primeira foto e gera todo o conteudo textual → usuario revisa e corrige
 
 | ID | Requisito | Prioridade |
 |----|-----------|------------|
-| FR-2.1 | Usuario faz upload de 1 foto de referencia do produto (JPG, PNG, WebP) | MUST |
-| FR-2.2 | **AI Image Service:** A partir da foto de referencia, gera 6 imagens profissionais estilo e-commerce (fundo branco, lifestyle, detalhe, angulos diferentes) via Nano Banana Pro (Google Gemini 3 Pro Image) | MUST |
-| FR-2.3 | **AI Copy Service:** A partir da foto de referencia, gera automaticamente: nome do produto, descricao persuasiva (max 3 frases), 4 features/beneficios, 4 depoimentos (3 de 5 estrelas + 1 de 4 estrelas), 3 perguntas FAQ com respostas via Claude API (vision) | MUST |
-| FR-2.4 | A foto de referencia NAO e publicada — apenas as 6 imagens geradas pela IA aparecem no carrossel | MUST |
+| FR-2.1 | Usuario faz upload de 1 a 6 fotos reais do produto (JPG, PNG, WebP, max 10MB cada) | MUST |
+| FR-2.2 | Usuario pode reordenar fotos (setas ← →) e remover fotos indesejadas (botao X) | MUST |
+| FR-2.3 | Primeira foto marcada como "Principal" — usada pela IA para analise | MUST |
+| FR-2.4 | **AI Copy Service:** A partir da primeira foto, gera automaticamente: nome do produto, marca/colecao, descricao persuasiva, 4 features/beneficios, 4 depoimentos (3 de 5 estrelas + 1 de 4 estrelas), 3 perguntas FAQ com respostas, mini review — via Claude API (vision) | MUST |
 | FR-2.5 | Usuario informa: preco atual, preco original (riscado), URL do checkout externo | MUST |
-| FR-2.6 | Usuario pode editar qualquer texto gerado pela IA antes de publicar | MUST |
-| FR-2.7 | Usuario pode pedir para a IA regenerar um campo especifico (texto) | SHOULD |
-| FR-2.8 | Usuario pode pedir para a IA regenerar uma imagem especifica | SHOULD |
+| FR-2.6 | Usuario pode editar TODOS os textos gerados pela IA antes de publicar: nome, marca, descricao, features, reviews (estrelas + autor + texto), FAQ (pergunta + resposta) | MUST |
+| FR-2.7 | Imagens convertidas automaticamente para WebP, max 800px largura | MUST |
 
-**Custo estimado por geracao completa:**
+> **Nota:** Geracao de imagens por IA (Nano Banana Pro / OpenAI) foi removida do MVP v1. Validacao mostrou que a qualidade atual das APIs nao atende o padrao e-commerce exigido. Sera reavaliada na v2 quando GPT-4o image generation estiver mais acessivel.
+
+**Custo estimado por geracao:**
 
 | Servico | API | Custo |
 |---------|-----|-------|
-| 6 imagens profissionais | Nano Banana Pro (Google Gemini 3 Pro Image) | ~R$4.30 ($0.80) |
 | Copy completa (textos) | Claude Sonnet 4.6 (Anthropic) | ~R$0.10 ($0.018) |
-| **Total por pagina** | — | **~R$4.40 ($0.82)** |
+| Imagens | Upload manual (sem custo) | R$0 |
+| **Total por pagina** | — | **~R$0.10 ($0.018)** |
 
 ### FR-3: Renderizacao da pagina
 
@@ -177,7 +178,6 @@ Uma unica acao (upload da foto) gera uma pagina completa com:
 | Banco | PostgreSQL 15+ | Mantido do braza.chat |
 | Monorepo | npm workspaces (api + web + shared) | Mantido do braza.chat |
 | IA Copy | Claude Sonnet 4.6 via @anthropic-ai/sdk | **NOVO** |
-| IA Imagens | Nano Banana Pro (Gemini 3 Pro Image) via @google/generative-ai | **NOVO** |
 | Processamento | sharp (WebP + resize) | **NOVO** |
 | Auth | JWT (@nestjs/jwt + passport-jwt + bcrypt) | **NOVO** |
 | Slugs | slugify | **NOVO** |
@@ -187,9 +187,10 @@ Uma unica acao (upload da foto) gera uma pagina completa com:
 | Dependencia | Modulo | Motivo |
 |------------|--------|--------|
 | `@anthropic-ai/sdk` | AI Copy Service | Claude API vision (textos) |
-| `@google/generative-ai` | AI Image Service | Nano Banana Pro / Gemini 3 Pro Image (fotos) |
 | `sharp` | Upload Service | Conversao WebP + resize |
 | `slugify` | Pages | Slugs unicos para URLs |
+
+> **Removidos do MVP:** `@google/generative-ai`, `openai` — geracao de imagens por IA sera reavaliada na v2.
 
 ### 6.4 Modulos do backend
 
@@ -303,32 +304,19 @@ model PageImage {
 | Custo | ~R$0.10 (~$0.018) |
 | Retry | 1x se JSON parsing falhar |
 
-**AI Image Service (Google — Nano Banana Pro):**
+**Upload de Imagens (manual pelo usuario):**
 
 | Config | Valor |
 |--------|-------|
-| Model | gemini-3-pro-image-preview (Nano Banana Pro) |
-| SDK | @google/generative-ai |
-| Input | Foto de referencia + prompt descrevendo estilo e-commerce |
-| Output | 6 imagens profissionais 4K (fundo branco, lifestyle, detalhe, angulos) |
-| Custo | ~R$4.30 (~$0.80) por 6 imagens |
-| Formato output | Converter para WebP otimizado, 800px largura via sharp |
-| Vantagens | Especializado em e-commerce, texto fiel, sombras reais, 4K nativo |
+| Quantidade | 1 a 6 fotos por pagina |
+| Formatos | JPG, PNG, WebP |
+| Tamanho max | 10MB por imagem |
+| Processamento | Conversao automatica para WebP, max 800px largura (sharp) |
+| Funcionalidades | Reordenar (setas), remover (X), posicao "Principal" na primeira |
 
-**6 imagens geradas (sugestao de estilos):**
+> **Nota:** Geracao de imagens por IA removida do MVP v1. APIs testadas (DALL-E 2/3, GPT-4o, gpt-image-1, Gemini) nao atingiram qualidade e-commerce com fidelidade ao produto. Sera reavaliada na v2.
 
-| Posicao | Estilo | Descricao |
-|---------|--------|-----------|
-| 1 | Hero — fundo branco | Produto centralizado, fundo clean, iluminacao profissional |
-| 2 | Angulo 45° | Produto em perspectiva, mostra profundidade |
-| 3 | Detalhe/close-up | Textura, material, acabamento |
-| 4 | Lifestyle | Produto em contexto de uso real |
-| 5 | Escala/tamanho | Produto com referencia de tamanho |
-| 6 | Embalagem/unboxing | Produto embalado ou sendo aberto |
-
-**Rate limit:** 5 req/min por usuario (prevenir abuso — custo maior)
-
-**Custo total por pagina:** ~R$4.40 ($0.82) = imagens + copy
+**Custo total por pagina:** ~R$0.10 ($0.018) = apenas copy
 
 ### 6.10 Seguranca (10 camadas)
 
@@ -349,7 +337,6 @@ model PageImage {
 ```env
 DATABASE_URL=postgresql://user:pass@localhost:5432/brazacommerce
 ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_AI_API_KEY=AIza...
 UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=10485760
 API_PORT=3001
@@ -377,18 +364,14 @@ NODE_ENV=development
 ```
 1. Usuario acessa o site (sem login)
 2. Clica "Nova pagina"
-3. Faz upload de 1 foto de referencia do produto
-4. Informa: preco, preco original, URL do checkout
-5. Clica "Gerar com IA"
-6. Em paralelo:
-   - Nano Banana Pro gera 6 imagens profissionais e-commerce
-   - Claude analisa foto e gera: nome, descricao, features, reviews, FAQ
-7. Usuario ve preview da pagina completa (imagens + textos)
-8. Edita textos se quiser (opcional)
-9. Pede regeneracao de imagem ou texto especifico (opcional)
-10. Clica "Publicar"
-11. Recebe link compartilhavel
-12. Usa o link nos anuncios (Meta Ads, Google Ads)
+3. Sobe ate 6 fotos reais do produto (reordena com setas, remove as que nao quer)
+4. Informa: preco de venda, preco original, link do checkout
+5. Clica "Gerar pagina com IA"
+6. Sistema sobe as fotos + Claude analisa a primeira foto e gera todos os textos
+7. Usuario revisa e corrige os textos gerados (nome, descricao, features, reviews, FAQ)
+8. Clica "Salvar e Publicar"
+9. Recebe link da pagina publica
+10. Usa o link nos anuncios (Meta Ads, Google Ads)
 ```
 
 ### Fluxo do visitante (quem acessa a pagina)
@@ -488,6 +471,7 @@ A LLM recebe as fotos e deve retornar um JSON estruturado:
 | Feature | Motivo | Quando |
 |---------|--------|--------|
 | Login / cadastro / auth | MVP sem autenticacao — acesso direto | v2 |
+| Geracao de imagens por IA | APIs atuais nao atingem qualidade e-commerce fiel ao produto | v2 |
 | Templates multiplos | MVP tem 1 template fixo | v2 |
 | Dominio customizado | Link padrao braza.commerce/p/slug | v2 |
 | Analytics (visitas, cliques) | Foco primeiro em gerar paginas | v2 |
@@ -527,16 +511,261 @@ A LLM recebe as fotos e deve retornar um JSON estruturado:
 | Epic | Nome | Descricao | Stories estimadas |
 |------|------|-----------|-------------------|
 | E1 | Setup | Limpar codebase, novo schema | 2 |
-| E2 | Upload & AI | Upload referencia, Nano Banana (imagens), Claude (copy) | 3 |
+| E2 | Upload & AI | Upload manual de fotos (ate 6), Claude (copy) | 2 |
 | E3 | Page Builder | CRUD de paginas, interface de edicao | 2 |
 | E4 | Publish & Serve | Render engine (template v3.0), publicacao, link publico | 2 |
 | E5 | Dashboard | Listagem de paginas, acoes (editar, duplicar, deletar) | 1 |
 
-**Total estimado:** 10 stories (sem auth = menos complexidade)
+**Total estimado:** 9 stories (sem auth, sem geracao de imagens)
 
 ---
 
-*PRD-001 braza.commerce v1.0 — Reviewed*
-*Morgan (PM) + Aria (Architect) — 19/03/2026*
-*Stack: Next.js 15 + NestJS + Prisma + PostgreSQL + Claude API (copy) + Nano Banana Pro (imagens)*
-*14 endpoints | 2 models | 6 modulos | 3 paginas | 2 servicos de IA | ~R$4.40/pagina gerada | sem auth (v2)*
+## 15. Changelog de implementacao (20/03/2026)
+
+### Alteracoes durante desenvolvimento
+
+| # | Alteracao | Motivo |
+|---|----------|--------|
+| 1 | Geracao de imagens por IA removida | APIs testadas (DALL-E 2/3, GPT-4o, gpt-image-1, Gemini) nao atingem qualidade e-commerce fiel ao produto |
+| 2 | Upload manual de ate 6 fotos | Substitui geracao por IA — usuario sobe suas proprias fotos |
+| 3 | Reordenar fotos (setas ← →) | Usuario controla ordem das fotos no carrossel |
+| 4 | Remover fotos (botao X) | Usuario remove fotos indesejadas |
+| 5 | Edicao completa de textos | Todos os campos da IA sao editaveis: nome, marca, descricao, features, reviews, FAQ |
+| 6 | Endpoint POST /pages/:id/images | Upload individual de fotos do produto |
+| 7 | Fix NaN vendidos | Hash deterministico do page ID em vez de parseInt |
+| 8 | Fix MIME upload | Aceita application/octet-stream |
+| 9 | Fix imports CommonJS | sharp e cookie-parser com import * as |
+| 10 | Link correto no dashboard | Copiar link aponta para backend (3001) |
+| 11 | Download ZIP removido | Extracao CSS/JS instavel — feature removida do MVP |
+
+### Decisoes tecnicas
+
+| Decisao | Justificativa |
+|---------|---------------|
+| Remover OpenAI SDK | Sem geracao de imagens, nao precisa |
+| Remover Google AI SDK | Mesmo motivo |
+| Manter apenas Anthropic SDK | So precisa de Claude para copy |
+| 1 API key no MVP | ANTHROPIC_API_KEY unica |
+
+### Pendentes (movidos para v1.1)
+
+| Feature | Descricao |
+|---------|-----------|
+| Geracao de imagens por IA | Reavaliar quando GPT-4o image ou Gemini melhorarem |
+| Regenerar campo especifico | Pedir para IA refazer um texto individual |
+| Download de pagina | ZIP com estrutura de pastas (avaliar abordagem) |
+
+---
+
+## 16. Roadmap v1.1 — Tracking, Pixel CAPI e Publicacao (20/03/2026)
+
+### Feature 1: Tracking — Funil de conversao estilo RedTrack
+
+**Objetivo:** Rastrear todo o funil clicks → offer page → checkout → compra com metricas em tempo real.
+
+#### Modelo de dados
+
+| Model | Campos principais |
+|-------|------------------|
+| **Campaign** | id, pageId (FK), name, checkoutUrl, pixelId, accessToken, status, createdAt |
+| **Click** | id, campaignId (FK), clickId (unique), fbclid, fbc, fbp, ip, userAgent, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, createdAt |
+| **Event** | id, clickId (FK), type (enum: VIEW_CONTENT, INITIATE_CHECKOUT, PURCHASE), value, currency, metadata (Json), createdAt |
+
+#### Fluxo completo
+
+```
+1. Usuario clica no anuncio (Facebook/Google)
+   → URL: braza.commerce/p/:slug?fbclid=xxx&utm_source=facebook
+
+2. Abre offer page (braza.commerce)
+   → Captura: fbclid, UTMs, IP, user-agent
+   → Gera click_id unico (ck_xxxxx)
+   → Registra Click no banco
+   → Dispara ViewContent server-side → Meta CAPI
+
+3. Clica "Comprar agora"
+   → Redirect para Yampi com metadata:
+     seguro.loja.com.br/r/PROD?metadata[click_id]=ck_xxxxx&metadata[fbclid]=xxx
+
+4. Compra concluida na Yampi
+   → Yampi envia webhook order.paid para braza.commerce
+   → Webhook contem metadata[click_id]
+   → Sistema conecta compra ao click original
+   → Registra Event type=PURCHASE
+   → Dispara Purchase server-side → Meta CAPI
+
+5. Dashboard mostra funil em tempo real
+```
+
+#### Endpoints novos
+
+| Metodo | Rota | Descricao |
+|--------|------|-----------|
+| POST | `/api/webhooks/yampi` | Recebe webhooks da Yampi (order.paid, order.created) |
+| GET | `/campaigns` | Listar campanhas |
+| POST | `/campaigns` | Criar campanha (pagina + checkout URL + pixel) |
+| GET | `/campaigns/:id/stats` | Metricas do funil em tempo real |
+| GET | `/campaigns/:id/clicks` | Lista de clicks com status |
+
+#### Dashboard — Metricas do funil
+
+```
+┌──────────────────────────────────────────┐
+│ Campanha: Coelha Pascoa                  │
+│ Periodo: Hoje | 7d | 30d | Custom       │
+│                                          │
+│ Cliques:        847                      │
+│ Offer Page:     823  (97.2%)             │
+│ Checkout:       312  (37.9%)             │
+│ Compras:         47  (15.1%)             │
+│                                          │
+│ Revenue:    R$ 3.753,00                  │
+│ CPA:        R$ 12.40                     │
+│ ROI:        6.4x                         │
+│ Ticket:     R$ 79.85                     │
+└──────────────────────────────────────────┘
+```
+
+---
+
+### Feature 2: Pixel Server-Side (Meta Conversion API)
+
+**Objetivo:** Enviar eventos de conversao direto do servidor para o Facebook, sem depender do navegador do usuario.
+
+#### Eventos disparados pelo braza.commerce (server-side)
+
+| Evento | Quando | Dados enviados |
+|--------|--------|---------------|
+| **ViewContent** | Usuario abre offer page | fbclid, fbc, fbp, IP, user-agent, page URL, product name |
+| **Purchase** | Yampi envia webhook order.paid | fbclid, fbc, fbp, valor, moeda, click_id |
+
+#### Eventos disparados pela Yampi (client-side, automatico)
+
+| Evento | Quando |
+|--------|--------|
+| **InitiateCheckout** | Usuario acessa checkout |
+| **AddPaymentInfo** | Preenche dados de pagamento |
+
+#### Cobertura combinada
+
+| Etapa | Quem dispara | Tipo |
+|-------|-------------|------|
+| ViewContent | braza.commerce | Server-side (CAPI) |
+| InitiateCheckout | Yampi | Client-side (pixel) |
+| AddPaymentInfo | Yampi | Client-side (pixel) |
+| Purchase | braza.commerce | Server-side (CAPI) |
+
+**Resultado:** Cobertura completa mesmo com AdBlock, iOS 14+, browsers com protecao.
+
+#### Configuracao necessaria do usuario
+
+| Onde | O que fazer | Frequencia |
+|------|-----------|-----------|
+| **Yampi** | Criar 1 webhook apontando para braza.commerce | 1 vez |
+| **braza.commerce** | Informar Pixel ID + Access Token do Facebook | 1 vez |
+| **braza.commerce** | Associar campanha a pagina + checkout URL | Por produto |
+
+#### Integracao com Yampi — Detalhes tecnicos
+
+| Aspecto | Detalhe |
+|---------|---------|
+| **Webhook URL** | `POST /api/webhooks/yampi` |
+| **Eventos** | `order.created`, `order.paid`, `transaction.payment.refused` |
+| **Validacao** | Header `X-Yampi-Hmac-SHA256` com HMAC-SHA256 da secret key |
+| **Metadata** | `metadata[click_id]` e `metadata[fbclid]` passados na URL do checkout |
+| **API Yampi** | `POST https://api.dooki.com.br/v2/{alias}/webhooks` para criar webhook via API |
+
+#### Metadata na URL do checkout (automatico)
+
+```
+URL base (usuario configura):
+https://seguro.loja.yampi.com.br/r/PRODUTO
+
+URL final (sistema gera automaticamente):
+https://seguro.loja.yampi.com.br/r/PRODUTO?metadata[click_id]=ck_abc123&metadata[fbclid]=fb_xyz&metadata[utm_source]=facebook&metadata[utm_campaign]=pascoa
+```
+
+---
+
+### Feature 3: Publicacao com slug customizada
+
+**Objetivo:** Usuario define a URL da pagina ao publicar.
+
+| Requisito | Detalhe |
+|-----------|---------|
+| Campo de slug editavel no momento de publicar | Input com preview da URL final |
+| Validacao de slug unico | Erro se slug ja existe |
+| Caracteres permitidos | Letras minusculas, numeros, hifens |
+| Preview em tempo real | `braza.commerce/p/meu-produto-pascoa` |
+| Slug automatico como fallback | Se nao preencher, gera automatico |
+
+---
+
+### Epics v1.1 (ordem sugerida)
+
+| Epic | Nome | Complexidade | Depende de |
+|------|------|-------------|-----------|
+| E6 | Slug customizada | Baixa | — |
+| E7 | Tracking (Campaign + Click + Funil) | Media-alta | E6 |
+| E8 | Pixel Server-Side (Meta CAPI) | Alta | E7 |
+| E9 | Dashboard de metricas (estilo RedTrack) | Media | E7, E8 |
+| E10 | Integracao Yampi (webhook + metadata) | Media | E7 |
+
+---
+
+### Configuracao na Yampi (passo a passo para o usuario)
+
+```
+1. Painel Yampi → Configuracoes → Webhooks
+2. + Novo webhook
+3. Nome: "braza.commerce"
+4. URL: https://seu-dominio.com/api/webhooks/yampi
+5. Eventos: Pedido criado + Pedido aprovado
+6. Salvar
+7. Copiar secret key → colar no braza.commerce
+```
+
+**Nada mais. Sem pixel, sem codigo, sem configuracao complicada.**
+
+---
+
+### Requisito de UX/UI — Layout identico ao tracker.braza
+
+> **Spec completa:** `docs/architecture/UX-SPEC-v1.1.md` (aprovada por Uma/UX — 20/03/2026)
+
+**Regra:** Todas as telas da v1.1 devem seguir **exatamente** o layout do tracker.braza. Mesmos componentes, cores, tipografia, animacoes e estrutura.
+
+| Elemento | Padrao tracker.braza |
+|----------|---------------------|
+| Layout | Sidebar w-[220px] + Header h-16 + Main p-6 |
+| Sidebar | bg-[#0c0c0e], items text-[13px], dot emerald ativo |
+| Cards | bg-[#111113] border-white/[0.06] rounded-xl card-glow |
+| KPI | text-2xl font-bold stat-number + gradient overlay |
+| Semaforo | emerald (bom) / amber (alerta) / red (ruim) |
+| Tabelas | Header uppercase text-[10px] zinc-600, rows hover white/[0.02] |
+| Botoes | bg-white/[0.08] hover white/[0.12] text-[12px] semibold |
+| Inputs | bg-white/[0.04] border-white/[0.06] text-[11px] |
+| Live status | live-pulse dot emerald + shimmer border |
+| Filtro periodo | Pills: Hoje / 7d / 30d / Custom |
+| Animacoes | card-glow, shimmer, pulse-glow, countUp |
+| Fonte | Inter (sans) + JetBrains Mono (mono) |
+| Mobile | Sidebar hidden md:flex, MobileNav md:hidden |
+
+**Telas v1.1:**
+
+| Tela | Rota | Layout |
+|------|------|--------|
+| Paginas | `/pages` | Grid cards com card-glow (ajustar para sidebar) |
+| Criar pagina | `/pages/new` | Form steps (ja existe, mover para layout com sidebar) |
+| Campanhas | `/campaigns` | Lista cards full-width com badges e mini metricas |
+| Criar campanha | `/campaigns/new` | Form com dropdown + inputs tracker-style |
+| Metricas | `/metrics` | 4 KPI primarios + 3 secundarios + funil + tabela conversoes |
+| Eventos | `/events` | Tabela estilo tracker.braza (timestamp, click_id, type, valor) |
+| Configuracoes | `/settings` | Secoes Yampi + Meta Pixel com status live-pulse |
+
+---
+
+*PRD-001 braza.commerce v1.0 + v1.1 Roadmap — 20/03/2026*
+*Morgan (PM) + Aria (Architect) + Uma (UX) + Dex (Dev) + Quinn (QA) + Gage (DevOps)*
+*v1.0: Next.js 15 + NestJS + Prisma + PostgreSQL + Claude API*
+*v1.1: + Tracking + Meta CAPI + Yampi webhooks + Dashboard RedTrack-style + Layout tracker.braza*

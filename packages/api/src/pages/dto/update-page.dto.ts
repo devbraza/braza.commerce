@@ -21,6 +21,10 @@ export class UpdatePageDto {
   checkoutUrl?: string;
 
   @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
   @IsObject()
   userEditedContent?: Record<string, unknown>;
 }

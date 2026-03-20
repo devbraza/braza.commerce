@@ -36,8 +36,10 @@ export default function DashboardPage() {
     return () => { cancelled = true; };
   }, []);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
   const copyLink = (slug: string) => {
-    const url = `${window.location.origin}/p/${slug}`;
+    const url = `${API_URL}/p/${slug}`;
     navigator.clipboard.writeText(url);
     setCopied(slug);
     setTimeout(() => setCopied(null), 2000);
@@ -45,29 +47,41 @@ export default function DashboardPage() {
 
   const deletePage = async (id: string) => {
     if (!confirm('Tem certeza? Esta acao nao pode ser desfeita.')) return;
-    await apiFetch(`/pages/${id}`, { method: 'DELETE' });
-    load();
+    try {
+      await apiFetch(`/pages/${id}`, { method: 'DELETE' });
+      load();
+    } catch {
+      alert('Erro ao deletar pagina');
+    }
   };
 
   const togglePublish = async (id: string, status: string) => {
     const action = status === 'PUBLISHED' ? 'unpublish' : 'publish';
-    await apiFetch(`/pages/${id}/${action}`, { method: 'PATCH' });
-    load();
+    try {
+      await apiFetch(`/pages/${id}/${action}`, { method: 'PATCH' });
+      load();
+    } catch {
+      alert('Erro ao alterar status da pagina');
+    }
   };
 
   const duplicate = async (id: string) => {
-    await apiFetch(`/pages/${id}/duplicate`, { method: 'POST' });
-    load();
+    try {
+      await apiFetch(`/pages/${id}/duplicate`, { method: 'POST' });
+      load();
+    } catch {
+      alert('Erro ao duplicar pagina');
+    }
   };
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#09090b] text-zinc-500">Carregando...</div>;
+  if (loading) return <div className="flex items-center justify-center py-20 text-zinc-500">Carregando...</div>;
 
   return (
-    <div className="min-h-screen bg-[#09090b] p-6">
+    <div>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold text-white">Minhas paginas</h1>
-          <Link href="/pages/new" className="px-4 py-2 bg-[#2CB67D] text-white rounded-lg font-semibold text-sm hover:bg-[#239d6a] transition">
+          <h1 className="text-xl font-bold text-white">Minhas paginas</h1>
+          <Link href="/pages/new" className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-semibold text-sm hover:bg-emerald-600 transition">
             + Nova pagina
           </Link>
         </div>
@@ -75,15 +89,15 @@ export default function DashboardPage() {
         {pages.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-zinc-500 mb-4">Nenhuma pagina criada ainda</p>
-            <Link href="/pages/new" className="px-6 py-3 bg-[#2CB67D] text-white rounded-lg font-semibold hover:bg-[#239d6a] transition">
+            <Link href="/pages/new" className="px-6 py-3 bg-emerald-500 text-white rounded-lg font-semibold hover:bg-emerald-600 transition">
               Criar primeira pagina
             </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {pages.map((p) => (
-              <div key={p.id} className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-                <div className="h-40 bg-zinc-800 flex items-center justify-center">
+              <div key={p.id} className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] overflow-hidden">
+                <div className="h-40 bg-white/[0.04] flex items-center justify-center">
                   {p.thumbnail ? (
                     <img src={p.thumbnail} alt={p.title || ''} className="w-full h-full object-cover" />
                   ) : (
@@ -96,23 +110,23 @@ export default function DashboardPage() {
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                       p.status === 'PUBLISHED' ? 'bg-green-900 text-green-400' :
                       p.status === 'ARCHIVED' ? 'bg-red-900 text-red-400' :
-                      'bg-zinc-800 text-zinc-400'
+                      'bg-white/[0.04] text-zinc-400'
                     }`}>
                       {p.status}
                     </span>
                   </div>
                   <p className="text-zinc-500 text-xs mb-3">{new Date(p.createdAt).toLocaleDateString('pt-BR')}</p>
                   <div className="flex gap-2 flex-wrap">
-                    <Link href={`/pages/${p.id}/edit`} className="text-xs px-3 py-1 bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700">Editar</Link>
-                    <button onClick={() => togglePublish(p.id, p.status)} className="text-xs px-3 py-1 bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700">
+                    <Link href={`/pages/${p.id}/edit`} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">Editar</Link>
+                    <button onClick={() => togglePublish(p.id, p.status)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
                       {p.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                     </button>
                     {p.status === 'PUBLISHED' && (
-                      <button onClick={() => copyLink(p.slug)} className="text-xs px-3 py-1 bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700">
+                      <button onClick={() => copyLink(p.slug)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
                         {copied === p.slug ? 'Copiado!' : 'Copiar link'}
                       </button>
                     )}
-                    <button onClick={() => duplicate(p.id)} className="text-xs px-3 py-1 bg-zinc-800 text-zinc-300 rounded hover:bg-zinc-700">Duplicar</button>
+                    <button onClick={() => duplicate(p.id)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">Duplicar</button>
                     <button onClick={() => deletePage(p.id)} className="text-xs px-3 py-1 bg-red-900/50 text-red-400 rounded hover:bg-red-900">Deletar</button>
                   </div>
                 </div>
