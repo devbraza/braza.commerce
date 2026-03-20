@@ -89,6 +89,19 @@
       background: rgba(0,0,0,0.15);
       cursor: pointer;
       transition: all 0.25s;
+      border: none;
+      padding: 0;
+      position: relative;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .carousel-dot::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 44px; height: 44px;
     }
 
     .carousel-dot.active { background: rgba(0,0,0,0.55); transform: scale(1.15); }
@@ -202,7 +215,7 @@
       font-size: 11px;
       font-weight: 700;
       color: #fff;
-      background: #2CB67D;
+      background: #1a7a52;
       padding: 2px 8px;
       border-radius: 4px;
     }
@@ -217,7 +230,7 @@
     .stock-text {
       font-size: 11px;
       font-weight: 600;
-      color: #ef4444;
+      color: #b91c1c;
       margin-bottom: 6px;
     }
 
@@ -244,9 +257,9 @@
     }
 
     @keyframes textFlash {
-      0% { color: #ef4444; }
-      30% { color: #ff0000; transform: scale(1.03); }
-      100% { color: #ef4444; transform: scale(1); }
+      0% { color: #b91c1c; }
+      30% { color: #991b1b; transform: scale(1.03); }
+      100% { color: #b91c1c; transform: scale(1); }
     }
 
     .stock-bar.pulse .stock-fill {
@@ -266,7 +279,7 @@
       justify-content: center;
       width: 100%;
       padding: 18px;
-      background: #2CB67D;
+      background: #1a7a52;
       color: #fff;
       font-family: 'Inter', sans-serif;
       font-size: 16px;
@@ -280,7 +293,7 @@
     }
 
     .cta-button:hover {
-      background: #239d6a;
+      background: #15603f;
       box-shadow: 0 6px 20px rgba(44, 182, 125, 0.4);
     }
 
@@ -319,7 +332,7 @@
     .social-toast-avatar {
       width: 32px; height: 32px;
       border-radius: 50%;
-      background: #2CB67D;
+      background: #1a7a52;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -433,7 +446,7 @@
     .feature-check {
       width: 20px; height: 20px;
       border-radius: 50%;
-      background: #2CB67D;
+      background: #1a7a52;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -682,7 +695,7 @@
 
     <!-- STOCK (urgency) -->
     <div class="stock-bar">
-      <div class="stock-text" id="stockText"><svg aria-hidden="true" style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Restam poucas unidades</div>
+      <div class="stock-text" id="stockText"><svg aria-hidden="true" style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Restam poucas unidades</div>
       <div class="stock-track" role="progressbar" aria-valuenow="18" aria-valuemin="0" aria-valuemax="100" aria-label="Nivel de estoque"><div class="stock-fill"></div></div>
     </div>
   </header>
@@ -1024,8 +1037,8 @@
   const stockFill = document.querySelector('.stock-fill');
   const stockBar = document.querySelector('.stock-bar');
 
-  const boltSvg = '<svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
-  const fireSvg = '<svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1012 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"/></svg>';
+  const boltSvg = '<svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+  const fireSvg = '<svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1012 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"/></svg>';
 
   function getRemaining() { return Math.max(5, 100 - (sold - 243)); }
 
