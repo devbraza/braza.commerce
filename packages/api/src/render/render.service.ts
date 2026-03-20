@@ -93,6 +93,12 @@ export class RenderService {
     const images = page.images.sort((a, b) => a.position - b.position);
     html = this.renderCarousel(html, images);
 
+    // Preload LCP image (first carousel image)
+    if (images.length > 0) {
+      const preloadTag = `<link rel="preload" as="image" href="${images[0].url}" fetchpriority="high">`;
+      html = html.replace('</head>', preloadTag + '\n</head>');
+    }
+
     // Inject tracking script if campaign is active
     if (campaignId) {
       html = this.injectTrackingScript(html, campaignId);
@@ -104,7 +110,7 @@ export class RenderService {
   private injectTrackingScript(html: string, campaignId: string): string {
     const trackingScript = `
 <script>
-(function(){
+(typeof requestIdleCallback==='function'?requestIdleCallback:setTimeout)(function(){
   var params = new URLSearchParams(window.location.search);
   var fbclid = params.get('fbclid');
   var utms = {
@@ -146,7 +152,7 @@ export class RenderService {
 
   private renderCarousel(html: string, images: PageImage[]): string {
     const slides = images
-      .map((img) => `<div class="carousel-slide"><img src="${img.url}" alt="Product image ${img.position}" fetchpriority="${img.position === 1 ? 'high' : 'auto'}"></div>`)
+      .map((img) => `<div class="carousel-slide"><img src="${img.url}" alt="Foto do produto ${img.position}" width="480" height="480" fetchpriority="${img.position === 1 ? 'high' : 'auto'}"${img.position > 1 ? ' loading="lazy" decoding="async"' : ''}></div>`)
       .join('\n      ');
 
     const dots = images
