@@ -152,11 +152,11 @@ export class RenderService {
 
   private renderCarousel(html: string, images: PageImage[]): string {
     const slides = images
-      .map((img) => `<div class="carousel-slide"><img src="${img.url}" alt="Foto do produto ${img.position}" width="480" height="480" fetchpriority="${img.position === 1 ? 'high' : 'auto'}"${img.position > 1 ? ' loading="lazy" decoding="async"' : ''}></div>`)
+      .map((img) => `<div class="carousel-slide"><img src="${img.url}" alt="Produto - foto ${img.position} de ${images.length}" width="480" height="480" fetchpriority="${img.position === 1 ? 'high' : 'auto'}"${img.position > 1 ? ' loading="lazy" decoding="async"' : ''}></div>`)
       .join('\n      ');
 
     const dots = images
-      .map((_, i) => `<div class="carousel-dot${i === 0 ? ' active' : ''}" data-index="${i}"></div>`)
+      .map((_, i) => `<button type="button" class="carousel-dot${i === 0 ? ' active' : ''}" data-index="${i}" aria-label="Ir para foto ${i + 1}"></button>`)
       .join('\n      ');
 
     html = html.replace('{{carousel_slides}}', slides);
