@@ -907,8 +907,93 @@ A Yampi grava esses dados no pedido e **retorna automaticamente** no webhook `or
 
 ---
 
-*PRD-001 braza.commerce v1.0 + v1.1 + v1.2 Roadmap — 21/03/2026*
+### Epics v1.3 — Tracking v1.1 (entregue 21/03/2026)
+
+> **Arquitetura:** `docs/architecture/ARCHITECTURE-tracking-v1.1.md`
+> **Pesquisa:** `docs/research/yampi-integration-research.md`
+> **Changelog:** Sessao abaixo
+
+#### E7 — Fluxo Unificado (pagina + tracking)
+
+**Conceito:** Pagina = Campanha. Fluxo unico de criacao com tracking embutido.
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E7-01: CreatePageDto aceita pixelId e accessToken | DONE | Campos opcionais no DTO |
+| FR-E7-02: Campaign auto-criada ao informar checkoutUrl | DONE | PagesService.create() e update() |
+| FR-E7-03: findActiveByPageId() no CampaignsService | DONE | Busca campanha ativa da pagina |
+| FR-E7-04: GET /pages/:id/stats endpoint | DONE | Proxy pro CampaignsService.getStats() |
+| FR-E7-05: findAll() retorna trackingEnabled | DONE | Inclui dados da Campaign ativa |
+| FR-E7-06: publish() injeta tracking no HTML | DONE | Passa campaignId pro RenderService |
+| FR-E7-07: duplicate() copia Campaign | DONE | Cria Campaign na pagina duplicada |
+| FR-E7-08: Step 3 (Tracking) no frontend | DONE | checkoutUrl + pixelId + accessToken + botao Pular |
+| FR-E7-09: Validacao https:// na URL checkout | DONE | Frontend valida antes de salvar |
+| FR-E7-10: Link para Facebook Ads com macros dinamicas | DONE | getPageUrlForAds() com {{campaign.name}}, {{ad.name}}, {{adset.name}} |
+
+#### E8 — Webhook Yampi
+
+**Integração:** Webhook configurado na Yampi (order.created + order.paid) com HMAC-SHA256.
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E8-01: Env var YAMPI_WEBHOOK_SECRET no Hetzner | DONE | Fallback pro banco (Settings) |
+| FR-E8-02: HMAC-SHA256 com raw body | DONE | NestFactory rawBody: true |
+| FR-E8-03: Idempotencia (skip duplicatas) | DONE | Check Event existente antes de inserir |
+| FR-E8-04: Parse payload Yampi (body.resource) | DONE | Yampi usa { event, resource } nao { event, data } |
+| FR-E8-05: Parse metadata array Yampi | DONE | Formato: { data: [{ key, value }] } |
+| FR-E8-06: extractOrderTotal usa value_total | DONE | Campo correto da Yampi |
+| FR-E8-07: CORS para CF Pages | DONE | braza-commerce-pages.pages.dev na lista de origins |
+
+#### E9 — Dashboard de Tracking
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E9-01: Pagina /pages/:id/stats | DONE | KPIs + funil + filtro por periodo |
+| FR-E9-02: 3 KPIs primarios (Views, Checkouts, Compras) | DONE | Cards com font-mono |
+| FR-E9-03: 3 KPIs secundarios (Revenue, Ticket, Conversao) | DONE | Valores em BRL |
+| FR-E9-04: Funil visual com barras | DONE | FunnelBar component |
+| FR-E9-05: Filtro por periodo (Hoje, 7d, 30d, Tudo) | DONE | Pills com reload automatico |
+| FR-E9-06: Estado vazio | DONE | "Nenhum dado ainda" |
+| FR-E9-07: Link "Metricas" nos cards da listagem | DONE | Botao verde quando tracking ativo |
+| FR-E9-08: Botao "Link Ads" na listagem | DONE | Copia URL com macros Facebook |
+
+#### E6 — Slug Customizada
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E6-01: Campo slug editavel na publicacao | DONE | Step 4 com prefixo + validacao |
+
+#### Infra — Script de Tracking
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-INF-01: Script usa URL absoluta do backend | DONE | API_BASE_URL env var |
+| FR-INF-02: Script reescreve hrefs dos CTAs | DONE | querySelectorAll('a[href]') com metadata |
+| FR-INF-03: regenerateAll inclui Campaign | DONE | regenerateAllWithCampaigns() |
+| FR-INF-04: Console logs para debug | DONE | [braza-tracking] clickId + links rewritten |
+
+#### QA Reviews v1.3
+
+| Review | Gate | Resultado |
+|--------|------|-----------|
+| v12: Tracking v1.1 (3 issues) | CONCERNS → PASS | duplicate() + URL validation + route order |
+
+#### Teste end-to-end confirmado
+
+```
+Landing page (CF Pages) → Script registra click (ck_6eaa14d)
+  → CTA reescrito com metadata[click_id]
+    → Yampi recebe metadata na URL do checkout
+      → Webhook order.created → INITIATE_CHECKOUT registrado
+      → Webhook order.paid → PURCHASE registrado (R$ 5,00)
+        → Funil fechado no dashboard
+```
+
+---
+
+*PRD-001 braza.commerce v1.0 + v1.1 + v1.2 + v1.3 Roadmap — 21/03/2026*
 *Morgan (PM) + Atlas (Analyst) + Aria (Architect) + Uma (UX) + Dex (Dev) + Quinn (QA) + Gage (DevOps)*
 *v1.0: Next.js 15 + NestJS + Prisma + PostgreSQL + Claude API*
 *v1.1: + Fluxo unificado (pagina=campanha) + Tracking nativo + Webhook Yampi + Dashboard metricas*
 *v1.2: + Cloudflare Pages (edge global) + FCP <0.5s + UX congruencia + Paginas legais*
+*v1.3: + Tracking entregue e testado end-to-end (click → checkout → purchase)*
