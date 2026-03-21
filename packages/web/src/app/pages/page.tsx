@@ -11,6 +11,7 @@ interface PageItem {
   status: string;
   createdAt: string;
   publishedAt: string | null;
+  staticUrl: string | null;
   thumbnail: string | null;
 }
 
@@ -38,8 +39,8 @@ export default function DashboardPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  const copyLink = (slug: string) => {
-    const url = `${API_URL}/p/${slug}`;
+  const copyLink = (slug: string, staticUrl?: string | null) => {
+    const url = staticUrl || `${API_URL}/p/${slug}`;
     navigator.clipboard.writeText(url);
     setCopied(slug);
     setTimeout(() => setCopied(null), 2000);
@@ -122,7 +123,7 @@ export default function DashboardPage() {
                       {p.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                     </button>
                     {p.status === 'PUBLISHED' && (
-                      <button onClick={() => copyLink(p.slug)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
+                      <button onClick={() => copyLink(p.slug, p.staticUrl)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
                         {copied === p.slug ? 'Copiado!' : 'Copiar link'}
                       </button>
                     )}
