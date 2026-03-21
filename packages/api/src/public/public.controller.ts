@@ -33,7 +33,7 @@ export class PublicController {
       campaign?.checkoutUrl,
     );
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
     return res.send(html);
   }
 

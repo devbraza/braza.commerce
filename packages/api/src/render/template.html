@@ -468,7 +468,7 @@
     .review-stars { color: #f59e0b; font-size: 10px; letter-spacing: 1px; margin-bottom: 6px; }
     .review-text { font-size: 12px; line-height: 1.55; color: #555; margin-bottom: 8px; }
     .review-author { font-size: 10px; font-weight: 600; color: #333; }
-    .review-verified { font-size: 9px; color: #2CB67D; font-weight: 500; }
+    .review-verified { font-size: 9px; color: #1a9a65; font-weight: 500; }
 
     /* ===== FAQ ===== */
     .faq-item { border-bottom: 1px solid #f0f0f0; }
@@ -484,6 +484,11 @@
       align-items: center;
       justify-content: space-between;
       user-select: none;
+      background: none;
+      border: none;
+      font-family: inherit;
+      text-align: left;
+      width: 100%;
     }
 
     .faq-q::after {
@@ -538,7 +543,7 @@
     .timer-notice { font-size: 10px; color: #bbb; margin-bottom: 16px; }
 
     /* ===== FOOTER ===== */
-    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #bbb; background: #f4f4f5; }
+    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #888; background: #f4f4f5; }
     .footer a { color: #999; text-decoration: underline; }
     .footer a:hover { color: #666; }
 
@@ -633,8 +638,8 @@
     <div class="carousel-track" id="carouselTrack">
       {{carousel_slides}}
     </div>
-    <button class="carousel-arrow left" id="arrowLeft"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    <button class="carousel-arrow right" id="arrowRight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
+    <button class="carousel-arrow left" id="arrowLeft" aria-label="Foto anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="carousel-arrow right" id="arrowRight" aria-label="Próxima foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
     <div class="carousel-dots" id="carouselDots">
       {{carousel_dots}}
     </div>
@@ -645,7 +650,7 @@
     <div class="header-top">
       <span class="product-brand">{{product_brand}}</span>
       <span class="sold-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         <span id="soldCount">{{sold_count}}</span> vendidos
       </span>
     </div>
@@ -656,7 +661,7 @@
     </div>
     <div class="viewing-now">
       <div class="viewing-dot"></div>
-      <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg aria-hidden="true" style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
       <span id="viewingCount">23</span> pessoas estão vendo agora
     </div>
     <div class="price-row">
@@ -668,7 +673,7 @@
 
     <!-- STOCK (urgency) -->
     <div class="stock-bar">
-      <div class="stock-text" id="stockText"><svg style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Restam poucas unidades</div>
+      <div class="stock-text" id="stockText"><svg aria-hidden="true" style="width:12px;height:12px;vertical-align:-1px;margin-right:2px;" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Restam poucas unidades</div>
       <div class="stock-track"><div class="stock-fill"></div></div>
     </div>
   </div>
@@ -678,27 +683,27 @@
     <a href="{{checkout_url}}" class="cta-button">Comprar agora</a>
   </div>
   <p class="cta-sub">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
     Compra protegida · Satisfação garantida
   </p>
 
   <!-- PAYMENT ICONS -->
   <div class="payment-flags">
     <!-- Visa -->
-    <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg role="img" aria-label="Visa" width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/>
       <path d="M17.4 18.2l1.7-10.4h2.7l-1.7 10.4h-2.7zm11.3-10.1c-.5-.2-1.4-.4-2.4-.4-2.7 0-4.5 1.4-4.5 3.4 0 1.5 1.3 2.3 2.4 2.8 1 .5 1.4.8 1.4 1.3 0 .7-.8 1-1.6 1-.9 0-1.7-.2-2.5-.5l-.4-.2-.4 2.3c.7.3 1.9.5 3.2.5 2.8 0 4.7-1.4 4.7-3.5 0-1.2-.7-2.1-2.2-2.8-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.9 0 1.5.2 2 .4l.2.1.5-2.2zm6.7-.3h-2.1c-.6 0-1.1.2-1.4.9l-3.9 9.5h2.8l.6-1.5h3.4l.3 1.5h2.4l-2.1-10.4zm-3.3 6.7l1.1-3 .3-.9.2.8.6 3.1h-2.2zM16 7.8l-2.5 7.1-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 9.1h2.8l4.2-10.6H16z" fill="#1A1F71"/>
       <path d="M11.5 7.8H7.4l0 .2c3.3.8 5.5 2.9 6.4 5.4l-.9-4.7c-.2-.7-.7-.9-1.4-.9z" fill="#F7A600"/>
     </svg>
     <!-- Mastercard -->
-    <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg role="img" aria-label="Mastercard" width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/>
       <circle cx="17" cy="14" r="7.5" fill="#EB001B"/>
       <circle cx="25" cy="14" r="7.5" fill="#F79E1B"/>
       <path d="M21 8.1a7.5 7.5 0 010 11.8 7.5 7.5 0 010-11.8z" fill="#FF5F00"/>
     </svg>
     <!-- PIX — logo oficial Banco Central (Font Awesome / brand book) -->
-    <svg width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg">
+    <svg role="img" aria-label="PIX" width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg">
       <rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/>
       <svg x="11" y="4" width="20" height="20" viewBox="0 0 512 512">
         <g fill="#4BB8A9" fill-rule="evenodd">
@@ -825,15 +830,15 @@
   <div class="section-pad" style="padding-bottom: 0;">
     <div class="section-title">Dúvidas</div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">{{faq_0_question}}</div>
+      <button class="faq-q" type="button" aria-expanded="false" onclick="this.setAttribute('aria-expanded',this.parentElement.classList.toggle('open'))">{{faq_0_question}}</button>
       <div class="faq-a">{{faq_0_answer}}</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">{{faq_1_question}}</div>
+      <button class="faq-q" type="button" aria-expanded="false" onclick="this.setAttribute('aria-expanded',this.parentElement.classList.toggle('open'))">{{faq_1_question}}</button>
       <div class="faq-a">{{faq_1_answer}}</div>
     </div>
     <div class="faq-item">
-      <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">{{faq_2_question}}</div>
+      <button class="faq-q" type="button" aria-expanded="false" onclick="this.setAttribute('aria-expanded',this.parentElement.classList.toggle('open'))">{{faq_2_question}}</button>
       <div class="faq-a">{{faq_2_answer}}</div>
     </div>
   </div>
@@ -859,14 +864,14 @@
 
       <a href="{{checkout_url}}" class="cta-button" style="margin: 0;">Comprar agora</a>
       <p class="cta-sub" style="padding: 6px 0 0;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Checkout seguro · Dados protegidos
       </p>
       <!-- PAYMENT ICONS -->
       <div class="payment-flags" style="margin-top:12px;">
-        <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><path d="M17.4 18.2l1.7-10.4h2.7l-1.7 10.4h-2.7zm11.3-10.1c-.5-.2-1.4-.4-2.4-.4-2.7 0-4.5 1.4-4.5 3.4 0 1.5 1.3 2.3 2.4 2.8 1 .5 1.4.8 1.4 1.3 0 .7-.8 1-1.6 1-.9 0-1.7-.2-2.5-.5l-.4-.2-.4 2.3c.7.3 1.9.5 3.2.5 2.8 0 4.7-1.4 4.7-3.5 0-1.2-.7-2.1-2.2-2.8-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.9 0 1.5.2 2 .4l.2.1.5-2.2zm6.7-.3h-2.1c-.6 0-1.1.2-1.4.9l-3.9 9.5h2.8l.6-1.5h3.4l.3 1.5h2.4l-2.1-10.4zm-3.3 6.7l1.1-3 .3-.9.2.8.6 3.1h-2.2zM16 7.8l-2.5 7.1-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 9.1h2.8l4.2-10.6H16z" fill="#1A1F71"/><path d="M11.5 7.8H7.4l0 .2c3.3.8 5.5 2.9 6.4 5.4l-.9-4.7c-.2-.7-.7-.9-1.4-.9z" fill="#F7A600"/></svg>
-        <svg width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><circle cx="17" cy="14" r="7.5" fill="#EB001B"/><circle cx="25" cy="14" r="7.5" fill="#F79E1B"/><path d="M21 8.1a7.5 7.5 0 010 11.8 7.5 7.5 0 010-11.8z" fill="#FF5F00"/></svg>
-        <svg width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><svg x="11" y="4" width="20" height="20" viewBox="0 0 512 512"><g fill="#4BB8A9" fill-rule="evenodd"><path d="M112.57 391.19c20.056 0 38.928-7.808 53.12-22l76.693-76.692c5.385-5.404 14.765-5.384 20.15 0l76.989 76.989c14.191 14.172 33.045 21.98 53.12 21.98h15.098l-97.138 97.139c-30.326 30.344-79.505 30.344-109.85 0l-97.415-97.416h9.232zm280.068-271.294c-20.056 0-38.929 7.809-53.12 22l-76.97 76.99c-5.551 5.53-14.6 5.568-20.15-.02l-76.711-76.693c-14.192-14.191-33.046-21.999-53.12-21.999h-9.234l97.416-97.416c30.344-30.344 79.523-30.344 109.867 0l97.138 97.138h-15.116z"/><path d="M22.758 200.753l58.024-58.024h31.787c13.84 0 27.384 5.605 37.172 15.394l76.694 76.693c7.178 7.179 16.596 10.768 26.033 10.768 9.417 0 18.854-3.59 26.014-10.75l76.989-76.99c9.787-9.787 23.331-15.393 37.171-15.393h37.654l58.3 58.302c30.343 30.344 30.343 79.523 0 109.867l-58.3 58.303H392.64c-13.84 0-27.384-5.605-37.171-15.394l-76.97-76.99c-13.914-13.894-38.172-13.894-52.066.02l-76.694 76.674c-9.788 9.788-23.332 15.413-37.172 15.413H80.782L22.758 310.62c-30.344-30.345-30.344-79.524 0-109.868"/></g></svg></svg>
+        <svg role="img" aria-label="Visa" width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><path d="M17.4 18.2l1.7-10.4h2.7l-1.7 10.4h-2.7zm11.3-10.1c-.5-.2-1.4-.4-2.4-.4-2.7 0-4.5 1.4-4.5 3.4 0 1.5 1.3 2.3 2.4 2.8 1 .5 1.4.8 1.4 1.3 0 .7-.8 1-1.6 1-.9 0-1.7-.2-2.5-.5l-.4-.2-.4 2.3c.7.3 1.9.5 3.2.5 2.8 0 4.7-1.4 4.7-3.5 0-1.2-.7-2.1-2.2-2.8-.9-.5-1.5-.8-1.5-1.3 0-.4.5-.9 1.5-.9.9 0 1.5.2 2 .4l.2.1.5-2.2zm6.7-.3h-2.1c-.6 0-1.1.2-1.4.9l-3.9 9.5h2.8l.6-1.5h3.4l.3 1.5h2.4l-2.1-10.4zm-3.3 6.7l1.1-3 .3-.9.2.8.6 3.1h-2.2zM16 7.8l-2.5 7.1-.3-1.3c-.5-1.6-2-3.4-3.7-4.3l2.4 9.1h2.8l4.2-10.6H16z" fill="#1A1F71"/><path d="M11.5 7.8H7.4l0 .2c3.3.8 5.5 2.9 6.4 5.4l-.9-4.7c-.2-.7-.7-.9-1.4-.9z" fill="#F7A600"/></svg>
+        <svg role="img" aria-label="Mastercard" width="42" height="28" viewBox="0 0 42 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><circle cx="17" cy="14" r="7.5" fill="#EB001B"/><circle cx="25" cy="14" r="7.5" fill="#F79E1B"/><path d="M21 8.1a7.5 7.5 0 010 11.8 7.5 7.5 0 010-11.8z" fill="#FF5F00"/></svg>
+        <svg role="img" aria-label="PIX" width="42" height="28" viewBox="0 0 42 28" xmlns="http://www.w3.org/2000/svg"><rect x="0.5" y="0.5" width="41" height="27" rx="4" fill="#fff" stroke="#e0e0e0"/><svg x="11" y="4" width="20" height="20" viewBox="0 0 512 512"><g fill="#4BB8A9" fill-rule="evenodd"><path d="M112.57 391.19c20.056 0 38.928-7.808 53.12-22l76.693-76.692c5.385-5.404 14.765-5.384 20.15 0l76.989 76.989c14.191 14.172 33.045 21.98 53.12 21.98h15.098l-97.138 97.139c-30.326 30.344-79.505 30.344-109.85 0l-97.415-97.416h9.232zm280.068-271.294c-20.056 0-38.929 7.809-53.12 22l-76.97 76.99c-5.551 5.53-14.6 5.568-20.15-.02l-76.711-76.693c-14.192-14.191-33.046-21.999-53.12-21.999h-9.234l97.416-97.416c30.344-30.344 79.523-30.344 109.867 0l97.138 97.138h-15.116z"/><path d="M22.758 200.753l58.024-58.024h31.787c13.84 0 27.384 5.605 37.172 15.394l76.694 76.693c7.178 7.179 16.596 10.768 26.033 10.768 9.417 0 18.854-3.59 26.014-10.75l76.989-76.99c9.787-9.787 23.331-15.393 37.171-15.393h37.654l58.3 58.302c30.343 30.344 30.343 79.523 0 109.867l-58.3 58.303H392.64c-13.84 0-27.384-5.605-37.171-15.394l-76.97-76.99c-13.914-13.894-38.172-13.894-52.066.02l-76.694 76.674c-9.788 9.788-23.332 15.413-37.172 15.413H80.782L22.758 310.62c-30.344-30.345-30.344-79.524 0-109.868"/></g></svg></svg>
       </div>
     </div>
   </div>
@@ -1027,16 +1032,21 @@
   // Init stock bar on load
   updateStockUI();
 
+  let soldSaveTimeout = null;
   function incrementSold() {
     sold++;
     soldEl.textContent = sold;
-    localStorage.setItem(SOLD_KEY, sold);
+    clearTimeout(soldSaveTimeout);
+    soldSaveTimeout = setTimeout(() => localStorage.setItem(SOLD_KEY, sold), 5000);
 
     // Pulse animation on stock bar
     stockBar.classList.remove('pulse');
-    void stockBar.offsetWidth; // force reflow to restart animation
-    stockBar.classList.add('pulse');
-    setTimeout(() => stockBar.classList.remove('pulse'), 700);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        stockBar.classList.add('pulse');
+        setTimeout(() => stockBar.classList.remove('pulse'), 700);
+      });
+    });
 
     updateStockUI();
 

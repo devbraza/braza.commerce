@@ -19,8 +19,10 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.1",
     "ts-node": "^10.9.2"
   },
   "dependencies": {
+    "compression": "^1.8.1"
   }
 }
