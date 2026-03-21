@@ -131,9 +131,11 @@ export class RenderService {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ campaignId: ${JSON.stringify(campaignId)}, fbclid: fbclid }, utms))
   }).then(function(r){ return r.json(); }).then(function(data){
+    console.log('[braza-tracking] clickId received:', data.clickId);
     if (!data.clickId) return;
     // Rewrite ALL external links on the page with metadata
     var links = document.querySelectorAll('a[href]');
+    var rewritten = 0;
     for (var i = 0; i < links.length; i++) {
       var href = links[i].getAttribute('href');
       if (!href || href === '#' || href.startsWith('javascript') || href.startsWith('#')) continue;
@@ -143,10 +145,12 @@ export class RenderService {
           url.searchParams.set('metadata[click_id]', data.clickId);
           if (fbclid) url.searchParams.set('metadata[fbclid]', fbclid);
           links[i].setAttribute('href', url.toString());
+          rewritten++;
         }
-      } catch(ex){}
+      } catch(ex){ console.error('[braza-tracking] error rewriting link:', href, ex); }
     }
-  }).catch(function(){});
+    console.log('[braza-tracking] rewritten', rewritten, 'links');
+  }).catch(function(err){ console.error('[braza-tracking] fetch error:', err); });
 })();
 </script>`;
     return html.replace('</body>', trackingScript + '\n</body>');
