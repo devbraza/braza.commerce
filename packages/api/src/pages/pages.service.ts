@@ -250,9 +250,17 @@ export class PagesService {
   async regenerateAllStatic() {
     const pages = await this.prisma.page.findMany({
       where: { status: 'PUBLISHED' },
-      include: { images: { orderBy: { position: 'asc' } } },
+      include: {
+        images: { orderBy: { position: 'asc' } },
+        campaigns: { where: { status: 'ACTIVE' }, orderBy: { createdAt: 'desc' }, take: 1 },
+      },
     });
-    return this.staticPages.regenerateAll(pages);
+    const pagesWithCampaigns = pages.map((p) => ({
+      page: p,
+      campaignId: p.campaigns[0]?.id,
+      campaignCheckoutUrl: p.campaigns[0]?.checkoutUrl,
+    }));
+    return this.staticPages.regenerateAllWithCampaigns(pagesWithCampaigns);
   }
 
   async findBySlug(slug: string) {

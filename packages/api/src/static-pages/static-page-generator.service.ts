@@ -136,8 +136,32 @@ export class StaticPageGeneratorService {
   /**
    * Regenerate all published pages locally, then deploy once to CF Pages.
    */
+  async regenerateAllWithCampaigns(items: { page: PageWithImages; campaignId?: string; campaignCheckoutUrl?: string }[]): Promise<number> {
+    let count = 0;
+    for (const { page, campaignId, campaignCheckoutUrl } of items) {
+      try {
+        await this.generateLocal(page, campaignId, campaignCheckoutUrl);
+        count++;
+      } catch (err) {
+        this.logger.error(`Failed to generate static page for ${page.slug}: ${err}`);
+      }
+    }
+
+    if (this.cloudflarePagesService.isEnabled() && count > 0) {
+      try {
+        await this.cloudflarePagesService.deployAll(this.staticDir);
+        this.logger.log(`CF Pages: deployed ${count} pages in single deploy`);
+      } catch (err) {
+        this.logger.error(`CF Pages bulk deploy failed: ${err}`);
+      }
+    }
+
+    this.logger.log(`Regenerated ${count}/${items.length} static pages`);
+    return count;
+  }
+
   async regenerateAll(pages: PageWithImages[]): Promise<number> {
-    // Generate all locally first
+    // Generate all locally first (without campaign tracking)
     let count = 0;
     for (const page of pages) {
       try {
