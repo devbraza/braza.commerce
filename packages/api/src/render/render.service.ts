@@ -110,9 +110,11 @@ export class RenderService {
   }
 
   private injectTrackingScript(html: string, campaignId: string): string {
+    const apiBaseUrl = process.env.API_BASE_URL || 'https://api.brazachat.shop';
     const trackingScript = `
 <script>
 (typeof requestIdleCallback==='function'?requestIdleCallback:setTimeout)(function(){
+  var API = ${JSON.stringify(apiBaseUrl)};
   var params = new URLSearchParams(window.location.search);
   var fbclid = params.get('fbclid');
   var utms = {
@@ -122,7 +124,7 @@ export class RenderService {
     utmContent: params.get('utm_content'),
     utmTerm: params.get('utm_term')
   };
-  fetch('/tracking/click', {
+  fetch(API + '/tracking/click', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ campaignId: ${JSON.stringify(campaignId)}, fbclid: fbclid }, utms))
