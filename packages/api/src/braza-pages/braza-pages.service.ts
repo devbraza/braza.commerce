@@ -15,21 +15,25 @@ interface BrazaPagesErrorResult {
   statusCode: number;
 }
 
+export interface BrazaPagesDomain {
+  id: string;
+  domain: string;
+  status: string;
+}
+
 @Injectable()
 export class BrazaPagesService {
   private readonly logger = new Logger(BrazaPagesService.name);
   private readonly baseUrl: string | undefined;
   private readonly apiKey: string | undefined;
-  private readonly defaultDomainId: string | undefined;
 
   constructor() {
     this.baseUrl = process.env.BRAZA_PAGES_URL;
     this.apiKey = process.env.BRAZA_PAGES_API_KEY;
-    this.defaultDomainId = process.env.BRAZA_PAGES_DEFAULT_DOMAIN_ID;
 
-    if (!this.baseUrl || !this.apiKey || !this.defaultDomainId) {
+    if (!this.baseUrl || !this.apiKey) {
       this.logger.warn(
-        'braza.pages integration disabled — missing env vars: BRAZA_PAGES_URL, BRAZA_PAGES_API_KEY, or BRAZA_PAGES_DEFAULT_DOMAIN_ID',
+        'braza.pages integration disabled — missing env vars: BRAZA_PAGES_URL or BRAZA_PAGES_API_KEY',
       );
     } else {
       this.logger.log(`braza.pages integration enabled → ${this.baseUrl}`);
@@ -37,17 +41,37 @@ export class BrazaPagesService {
   }
 
   isConfigured(): boolean {
-    return !!(this.baseUrl && this.apiKey && this.defaultDomainId);
+    return !!(this.baseUrl && this.apiKey);
   }
 
-  getDefaultDomainId(): string | undefined {
-    return this.defaultDomainId;
+  async listDomains(): Promise<BrazaPagesDomain[]> {
+    if (!this.isConfigured()) return [];
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/domains`, {
+        headers: { 'x-api-key': this.apiKey! },
+      });
+
+      if (!response.ok) {
+        this.logger.error(`braza.pages listDomains failed: ${response.status}`);
+        return [];
+      }
+
+      const domains = await response.json() as Array<{ id: string; domain: string; status: string }>;
+      return domains
+        .filter((d) => d.status === 'ACTIVE')
+        .map(({ id, domain, status }) => ({ id, domain, status }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      this.logger.error(`braza.pages listDomains request failed: ${message}`);
+      return [];
+    }
   }
 
   async publish(
     html: string,
     slug: string,
-    domainId?: string,
+    domainId: string,
   ): Promise<BrazaPagesPublishResult | BrazaPagesErrorResult> {
     if (!this.isConfigured()) {
       return {
@@ -57,7 +81,7 @@ export class BrazaPagesService {
       };
     }
 
-    const targetDomainId = domainId || this.defaultDomainId;
+    const targetDomainId = domainId;
 
     try {
       const response = await fetch(

@@ -57,6 +57,11 @@ export class PagesController {
     return { available };
   }
 
+  @Get('braza-pages-domains')
+  async listBrazaPagesDomains() {
+    return this.brazaPages.listDomains();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.pages.findOne(id);
@@ -202,9 +207,16 @@ export class PagesController {
   }
 
   @Post(':id/publish-to-braza-pages')
-  async publishToBrazaPages(@Param('id') id: string) {
+  async publishToBrazaPages(
+    @Param('id') id: string,
+    @Body() body: { domain_id?: string },
+  ) {
     if (!this.brazaPages.isConfigured()) {
       throw new ServiceUnavailableException('Integracao braza.pages nao configurada');
+    }
+
+    if (!body.domain_id) {
+      throw new BadRequestException('domain_id e obrigatorio — selecione um dominio');
     }
 
     const page = await this.prisma.page.findUnique({
@@ -222,7 +234,7 @@ export class PagesController {
     const result = await this.brazaPages.publish(
       html,
       page.slug,
-      this.brazaPages.getDefaultDomainId(),
+      body.domain_id,
     );
 
     if (!result.success) {

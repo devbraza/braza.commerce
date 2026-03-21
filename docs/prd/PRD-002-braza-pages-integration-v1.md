@@ -177,6 +177,32 @@ BRAZA_PAGES_API_KEY=secret-compartilhado
 
 **Referência:** Contrato completo em `braza.pages/docs/INTEGRATION-DEPLOY-PASSTHROUGH.md`
 
+#### FR-07: Listagem dinâmica de domínios do braza.pages
+
+**Onde:** `BrazaPagesService` (backend) + novo endpoint no `PagesController`
+
+**Comportamento:**
+- `BrazaPagesService.listDomains()` faz `GET {BRAZA_PAGES_URL}/api/domains` com header `x-api-key`
+- Filtra apenas domínios com status `ACTIVE`
+- Retorna lista com `{ id, domain, status }` para o frontend
+- Novo endpoint: `GET /pages/braza-pages-domains` no PagesController
+- Se braza.pages offline ou não configurado: retorna array vazio
+
+**Decisão de stakeholder (21/03/2026):** Domínio NÃO pode ser hardcoded via env var. O sistema deve listar dinamicamente os domínios disponíveis no braza.pages. À medida que novos domínios forem adicionados no braza.pages, devem aparecer automaticamente no braza.commerce.
+
+#### FR-08: Seletor de domínio na UI antes de publicar
+
+**Onde:** Step 4 do fluxo de criação (`packages/web/src/app/pages/new/page.tsx`)
+
+**Comportamento:**
+- Antes do botão "Publicar com braza.pages", mostrar dropdown/select com domínios ACTIVE
+- Lista carregada via `GET /pages/braza-pages-domains`
+- Usuário seleciona o domínio → clica publicar → `domain_id` selecionado é enviado no request
+- Se nenhum domínio disponível: botão desabilitado com mensagem "Nenhum domínio disponível"
+- Se braza.pages offline: mostrar estado "indisponível"
+
+**Env var removida:** `BRAZA_PAGES_DEFAULT_DOMAIN_ID` é desnecessária — substituída pela seleção na UI.
+
 ### 5.3 No braza.pages (backend) — ✅ IMPLEMENTADO
 
 #### FR-06: Endpoint de deploy passthrough (HTML direto) — ✅ PRONTO
@@ -235,7 +261,7 @@ Body: {
 | Sincronização bidirecional | Não necessário — comunicação é unidirecional | Avaliar |
 | Atualizar página já publicada no braza.pages | MVP = publicar uma vez | v2 |
 | Despublicar via braza.commerce | Usuário faz direto no braza.pages | v2 |
-| Seleção de domínio na UI | MVP = usa domínio padrão configurado via env | v2 |
+| ~~Seleção de domínio na UI~~ | ~~MVP = usa domínio padrão configurado via env~~ | **PROMOVIDO para MVP — ver FR-07/FR-08** |
 | Tracking/campaigns nas páginas braza.pages | Tracking script é injetado no HTML pelo render — já vai junto | — |
 | Self-hosting de imagens no braza.pages | Ver limitação CON-01 abaixo | v2 |
 
@@ -281,7 +307,7 @@ VISITANTE FINAL:
 | ID | Limitação | Impacto | Severidade | Resolução |
 |---|---|---|---|---|
 | **CON-01** | Imagens no HTML apontam para o servidor do braza.commerce (`{API_URL}/uploads/...`). Se o braza.commerce cair, imagens quebram nas páginas publicadas via braza.pages. | Dependência de runtime parcial — contradiz independência total | **MÉDIA** | MVP: aceitável, funciona. v2: upload de imagens junto com HTML ou usar URLs de produção absolutas |
-| **CON-02** | `domain_id` fixo via env var — todas as páginas vão para o mesmo domínio | Sem flexibilidade de domínio por página | **BAIXA** | MVP: suficiente (1 operador, 1 domínio). v2: seleção de domínio na UI |
+| ~~**CON-02**~~ | ~~`domain_id` fixo via env var~~ | ~~Sem flexibilidade~~ | ~~BAIXA~~ | **RESOLVIDO — FR-07/FR-08 promovidos para MVP (21/03/2026)** |
 | **CON-03** | Slug collision teórica — braza.commerce e braza.pages validam unicidade nos seus próprios DBs independentemente | Se slug existir por outra via no braza.pages, será sobrescrito sem aviso | **BAIXA** | MVP: risco mínimo (mesmo operador). Slug do braza.commerce é repassado diretamente |
 
 ---
@@ -371,10 +397,10 @@ VISITANTE FINAL:
 
 **Env vars necessárias no braza.commerce (conforme contrato):**
 ```env
-BRAZA_PAGES_URL=https://pages.braza.chat           # URL base do braza.pages
+BRAZA_PAGES_URL=https://brazapages.vercel.app       # URL base do braza.pages (produção)
 BRAZA_PAGES_API_KEY=mesmo-valor-do-API_SECRET       # Chave compartilhada
-BRAZA_PAGES_DEFAULT_DOMAIN_ID=uuid-do-dominio       # Domínio padrão para deploy (MVP)
 ```
+~~`BRAZA_PAGES_DEFAULT_DOMAIN_ID`~~ — **REMOVIDA** (21/03/2026). Substituída por seleção dinâmica na UI (FR-07/FR-08).
 
 ---
 
