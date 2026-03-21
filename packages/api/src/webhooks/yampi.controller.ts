@@ -33,9 +33,16 @@ export class YampiController {
 
       res.status(200).send('OK');
 
-      const { event, data } = req.body as { event: string; data: Record<string, unknown> };
-      this.logger.log(`Yampi webhook received: ${event}`);
+      // Log full payload structure for debugging
+      const body = req.body as Record<string, unknown>;
+      this.logger.log(`Yampi webhook payload keys: ${Object.keys(body).join(', ')}`);
+      this.logger.log(`Yampi webhook body: ${JSON.stringify(body).slice(0, 500)}`);
 
+      const event = (body.event as string) || '';
+      const data = (body.data || body.resource || body) as Record<string, unknown>;
+      this.logger.log(`Yampi webhook received: ${event}, data keys: ${Object.keys(data).join(', ')}`);
+
+      // Try multiple paths for metadata
       const clickId = this.yampi.extractClickId(data);
       if (!clickId) {
         this.logger.debug('Yampi webhook: no click_id in metadata, skipping tracking');

@@ -19,12 +19,28 @@ export class YampiService {
   }
 
   extractClickId(data: Record<string, unknown>): string | null {
-    const metadata = data.metadata as Record<string, unknown> | undefined;
-    if (!metadata) return null;
-    return (metadata.click_id as string) || null;
+    // Try multiple paths: data.metadata, data.resource.metadata, data.order.metadata
+    const candidates = [
+      data?.metadata,
+      (data?.resource as Record<string, unknown>)?.metadata,
+      (data?.order as Record<string, unknown>)?.metadata,
+    ];
+    for (const metadata of candidates) {
+      if (metadata && typeof metadata === 'object') {
+        const clickId = (metadata as Record<string, unknown>).click_id as string;
+        if (clickId) {
+          this.logger.log(`Found click_id: ${clickId}`);
+          return clickId;
+        }
+      }
+    }
+    this.logger.log(`No click_id found in paths: metadata, resource.metadata, order.metadata`);
+    return null;
   }
 
   extractOrderTotal(data: Record<string, unknown>): number {
-    return Number(data.total || data.amount || 0);
+    // Try multiple paths for total
+    const resource = data?.resource as Record<string, unknown> | undefined;
+    return Number(resource?.total || resource?.amount || data?.total || data?.amount || 0);
   }
 }
