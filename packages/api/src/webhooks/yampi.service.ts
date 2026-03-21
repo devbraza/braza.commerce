@@ -5,10 +5,11 @@ import { createHmac } from 'crypto';
 export class YampiService {
   private readonly logger = new Logger(YampiService.name);
 
-  validateSignature(body: unknown, signature: string, secretKey: string): boolean {
+  validateSignature(body: Buffer | unknown, signature: string, secretKey: string): boolean {
     if (!signature || !secretKey) return false;
+    const payload = Buffer.isBuffer(body) ? body : JSON.stringify(body);
     const computed = createHmac('sha256', secretKey)
-      .update(JSON.stringify(body))
+      .update(payload)
       .digest('base64');
     const isValid = computed === signature;
     if (!isValid) {
