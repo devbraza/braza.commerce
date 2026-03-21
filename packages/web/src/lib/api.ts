@@ -1,5 +1,13 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+/** Cloudflare Pages base URL for published landing pages */
+export const PAGES_BASE_URL = 'https://braza-commerce-pages.pages.dev';
+
+/** Build the public URL for a published landing page */
+export function getPageUrl(slug: string): string {
+  return `${PAGES_BASE_URL}/${slug}/`;
+}
+
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit,

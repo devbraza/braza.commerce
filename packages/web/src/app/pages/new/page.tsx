@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getPageUrl } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -191,9 +191,9 @@ export default function NewPagePage() {
           body: JSON.stringify({ slug: customSlug }),
         });
       }
-      const res = await apiFetch<{ slug: string; staticUrl?: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
+      const res = await apiFetch<{ slug: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
       setPublishedSlug(res.slug);
-      setPublishedUrl(res.staticUrl || `${API_URL}/p/${res.slug}`);
+      setPublishedUrl(getPageUrl(res.slug));
       setStep(4);
     } catch (err) {
       alert('Erro ao publicar: ' + (err as Error).message);
