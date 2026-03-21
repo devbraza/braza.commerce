@@ -1,14 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { apiFetch } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-
-interface BrazaPagesDomain {
-  id: string;
-  domain: string;
-  status: string;
-}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -46,28 +40,6 @@ export default function NewPagePage() {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
   const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [brazaPagesStatus, setBrazaPagesStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'unavailable'>('idle');
-  const [brazaPagesUrl, setBrazaPagesUrl] = useState<string | null>(null);
-  const [brazaPagesError, setBrazaPagesError] = useState<string | null>(null);
-  const [brazaPagesDomains, setBrazaPagesDomains] = useState<BrazaPagesDomain[]>([]);
-  const [selectedDomainId, setSelectedDomainId] = useState<string>('');
-  const [loadingDomains, setLoadingDomains] = useState(false);
-
-  // Load braza.pages domains when reaching step 4
-  useEffect(() => {
-    if (step !== 4) return;
-    setLoadingDomains(true);
-    apiFetch<BrazaPagesDomain[]>('/pages/braza-pages-domains')
-      .then((data) => {
-        setBrazaPagesDomains(data);
-        if (data.length > 0) setSelectedDomainId(data[0].id);
-      })
-      .catch(() => {
-        setBrazaPagesDomains([]);
-        setBrazaPagesStatus('unavailable');
-      })
-      .finally(() => setLoadingDomains(false));
-  }, [step]);
 
   // Photo management
   const addPhotos = (files: FileList) => {
@@ -225,31 +197,6 @@ export default function NewPagePage() {
       alert('Erro ao publicar: ' + (err as Error).message);
     }
     setSaving(false);
-  };
-
-  const publishToBrazaPages = async () => {
-    if (!pageId || !selectedDomainId) return;
-    setBrazaPagesStatus('loading');
-    setBrazaPagesError(null);
-    try {
-      const res = await apiFetch<{ success: boolean; url: string; deploymentId: string }>(
-        `/pages/${pageId}/publish-to-braza-pages`,
-        {
-          method: 'POST',
-          body: JSON.stringify({ domain_id: selectedDomainId }),
-        },
-      );
-      setBrazaPagesUrl(res.url);
-      setBrazaPagesStatus('success');
-    } catch (err) {
-      const message = (err as Error).message || 'Erro desconhecido';
-      if (message.includes('503') || message.includes('nao configurada')) {
-        setBrazaPagesStatus('unavailable');
-      } else {
-        setBrazaPagesStatus('error');
-        setBrazaPagesError(message);
-      }
-    }
   };
 
   return (
@@ -435,76 +382,19 @@ export default function NewPagePage() {
 
         {/* STEP 4: Published */}
         {step === 4 && publishedSlug && (
-          <div className="space-y-4">
-            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
-              <h2 className="text-white font-semibold mb-2">Pagina publicada!</h2>
-              <p className="text-emerald-500 text-sm mt-2">
-                {API_URL}/p/{publishedSlug}
-              </p>
-              <div className="mt-6 flex gap-3 justify-center">
-                <a href={`${API_URL}/p/${publishedSlug}`}
-                  target="_blank" className="px-6 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600">
-                  Ver pagina
-                </a>
-                <button onClick={() => router.push('/pages')} className="px-6 py-2 bg-white/[0.04] text-zinc-300 rounded-lg text-sm hover:bg-white/[0.08]">
-                  Dashboard
-                </button>
-              </div>
-            </div>
-
-            {/* braza.pages integration */}
-            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
-              {brazaPagesStatus === 'success' && brazaPagesUrl ? (
-                <>
-                  <p className="text-emerald-500 font-semibold text-sm mb-1">Publicado no braza.pages!</p>
-                  <a href={brazaPagesUrl} target="_blank" rel="noopener noreferrer" className="text-emerald-400 text-sm underline hover:text-emerald-300">
-                    {brazaPagesUrl}
-                  </a>
-                </>
-              ) : brazaPagesStatus === 'unavailable' ? (
-                <>
-                  <p className="text-zinc-500 text-sm mb-1">Servico indisponivel</p>
-                  <button disabled className="mt-2 px-6 py-2 bg-white/[0.04] text-zinc-600 rounded-lg text-sm cursor-not-allowed">
-                    Publicar com braza.pages
-                  </button>
-                </>
-              ) : brazaPagesStatus === 'error' ? (
-                <>
-                  <p className="text-red-400 text-sm mb-1">{brazaPagesError || 'Falha ao publicar'}</p>
-                  <button onClick={publishToBrazaPages} className="mt-2 px-6 py-2 bg-red-900/50 text-red-300 rounded-lg text-sm hover:bg-red-900">
-                    Tentar novamente
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-zinc-400 text-xs mb-3">Publique em dominio customizado com CDN global</p>
-
-                  {loadingDomains ? (
-                    <p className="text-zinc-500 text-xs">Carregando dominios...</p>
-                  ) : brazaPagesDomains.length === 0 ? (
-                    <p className="text-zinc-500 text-xs">Nenhum dominio disponivel no braza.pages</p>
-                  ) : (
-                    <>
-                      <select
-                        value={selectedDomainId}
-                        onChange={(e) => setSelectedDomainId(e.target.value)}
-                        className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06] mb-3"
-                      >
-                        {brazaPagesDomains.map((d) => (
-                          <option key={d.id} value={d.id}>{d.domain}</option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={publishToBrazaPages}
-                        disabled={brazaPagesStatus === 'loading' || !selectedDomainId}
-                        className="px-6 py-2 bg-white/[0.06] text-zinc-200 rounded-lg text-sm font-semibold border border-white/[0.1] hover:bg-white/[0.1] transition disabled:opacity-50"
-                      >
-                        {brazaPagesStatus === 'loading' ? 'Publicando...' : 'Publicar com braza.pages'}
-                      </button>
-                    </>
-                  )}
-                </>
-              )}
+          <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
+            <h2 className="text-white font-semibold mb-2">Pagina publicada!</h2>
+            <p className="text-emerald-500 text-sm mt-2">
+              {API_URL}/p/{publishedSlug}
+            </p>
+            <div className="mt-6 flex gap-3 justify-center">
+              <a href={`${API_URL}/p/${publishedSlug}`}
+                target="_blank" className="px-6 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600">
+                Ver pagina
+              </a>
+              <button onClick={() => router.push('/pages')} className="px-6 py-2 bg-white/[0.04] text-zinc-300 rounded-lg text-sm hover:bg-white/[0.08]">
+                Dashboard
+              </button>
             </div>
           </div>
         )}
