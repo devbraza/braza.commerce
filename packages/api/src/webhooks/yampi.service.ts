@@ -19,28 +19,34 @@ export class YampiService {
   }
 
   extractClickId(data: Record<string, unknown>): string | null {
-    // Try multiple paths: data.metadata, data.resource.metadata, data.order.metadata
-    const candidates = [
-      data?.metadata,
-      (data?.resource as Record<string, unknown>)?.metadata,
-      (data?.order as Record<string, unknown>)?.metadata,
-    ];
-    for (const metadata of candidates) {
-      if (metadata && typeof metadata === 'object') {
-        const clickId = (metadata as Record<string, unknown>).click_id as string;
-        if (clickId) {
-          this.logger.log(`Found click_id: ${clickId}`);
-          return clickId;
-        }
+    const metadata = data?.metadata as Record<string, unknown> | undefined;
+    if (!metadata) {
+      this.logger.log('No metadata in payload');
+      return null;
+    }
+
+    // Yampi metadata format: { data: [{ key: "click_id", value: "ck_xxx" }, ...] }
+    const metadataData = metadata.data as Array<{ key: string; value: string }> | undefined;
+    if (Array.isArray(metadataData)) {
+      const entry = metadataData.find((item) => item.key === 'click_id');
+      if (entry?.value) {
+        this.logger.log(`Found click_id: ${entry.value}`);
+        return entry.value;
       }
     }
-    this.logger.log(`No click_id found in paths: metadata, resource.metadata, order.metadata`);
+
+    // Fallback: direct metadata.click_id
+    const directClickId = metadata.click_id as string;
+    if (directClickId) {
+      this.logger.log(`Found click_id (direct): ${directClickId}`);
+      return directClickId;
+    }
+
+    this.logger.log(`No click_id in metadata: ${JSON.stringify(metadata).slice(0, 200)}`);
     return null;
   }
 
   extractOrderTotal(data: Record<string, unknown>): number {
-    // Try multiple paths for total
-    const resource = data?.resource as Record<string, unknown> | undefined;
-    return Number(resource?.total || resource?.amount || data?.total || data?.amount || 0);
+    return Number(data?.value_total || data?.total || data?.amount || 0);
   }
 }
