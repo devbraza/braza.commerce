@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { writeFile, mkdir, rm, copyFile } from 'fs/promises';
+import { writeFile, readFile, mkdir, rm, copyFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { RenderService } from '../render/render.service';
@@ -74,7 +74,17 @@ export class StaticPageGeneratorService {
 
       if (existsSync(srcPath)) {
         await copyFile(srcPath, join(imgDir, filename));
-        html = html.split(img.url).join(`/p/${page.slug}/img/${filename}`);
+
+        if (img.position === 1) {
+          // Inline first image as base64 (eliminates LCP round trip)
+          const imgBuffer = await readFile(srcPath);
+          const b64 = imgBuffer.toString('base64');
+          html = html.split(img.url).join(`data:image/webp;base64,${b64}`);
+          // Remove preload tag for inlined image (no longer needed)
+          html = html.replace(/<link rel="preload" as="image" href="[^"]*" fetchpriority="high">\n?/, '');
+        } else {
+          html = html.split(img.url).join(`/p/${page.slug}/img/${filename}`);
+        }
       }
     }
 
