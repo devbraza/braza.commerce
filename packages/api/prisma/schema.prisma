@@ -40,7 +40,10 @@ model Page {
   userEditedContent  Json?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
-  publishedAt        DateTime?
+  publishedAt            DateTime?
+  brazaPagesUrl          String?
+  brazaPagesDeployId     String?
+  brazaPagesPublishedAt  DateTime?
   images             PageImage[]
   campaigns          Campaign[]
 }

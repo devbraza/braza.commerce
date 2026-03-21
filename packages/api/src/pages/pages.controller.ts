@@ -9,6 +9,8 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  HttpException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PagesService } from './pages.service';
@@ -18,6 +20,8 @@ import { AiCopyService } from '../ai/ai-copy.service';
 import { AiImageService } from '../ai/ai-image.service';
 import { UploadService } from '../upload/upload.service';
 import { PrismaService } from '../common/services/prisma.service';
+import { BrazaPagesService } from '../braza-pages/braza-pages.service';
+import { RenderService } from '../render/render.service';
 import * as sharp from 'sharp';
 import { join } from 'path';
 import { Prisma } from '@prisma/client';
@@ -33,6 +37,8 @@ export class PagesController {
     private readonly upload: UploadService,
     private readonly aiCopy: AiCopyService,
     private readonly aiImage: AiImageService,
+    private readonly brazaPages: BrazaPagesService,
+    private readonly renderService: RenderService,
   ) {}
 
   @Post()
@@ -193,5 +199,55 @@ export class PagesController {
       data: { aiGeneratedContent: content as unknown as Prisma.InputJsonValue, title: content.name },
     });
     return { content };
+  }
+
+  @Post(':id/publish-to-braza-pages')
+  async publishToBrazaPages(@Param('id') id: string) {
+    if (!this.brazaPages.isConfigured()) {
+      throw new ServiceUnavailableException('Integracao braza.pages nao configurada');
+    }
+
+    const page = await this.prisma.page.findUnique({
+      where: { id },
+      include: { images: true },
+    });
+
+    if (!page) throw new BadRequestException('Page not found');
+    if (page.status !== 'PUBLISHED') {
+      throw new BadRequestException('Pagina precisa estar publicada antes de enviar ao braza.pages');
+    }
+
+    const html = this.renderService.render(page);
+
+    const result = await this.brazaPages.publish(
+      html,
+      page.slug,
+      this.brazaPages.getDefaultDomainId(),
+    );
+
+    if (!result.success) {
+      const err = result as { error: string; statusCode: number };
+      throw new HttpException(
+        { success: false, error: err.error },
+        err.statusCode,
+      );
+    }
+
+    const published = result as { url: string; deployment_id: string };
+
+    await this.prisma.page.update({
+      where: { id },
+      data: {
+        brazaPagesUrl: published.url,
+        brazaPagesDeployId: published.deployment_id,
+        brazaPagesPublishedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      url: published.url,
+      deploymentId: published.deployment_id,
+    };
   }
 }

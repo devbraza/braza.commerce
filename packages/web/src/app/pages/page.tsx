@@ -12,6 +12,7 @@ interface PageItem {
   createdAt: string;
   publishedAt: string | null;
   thumbnail: string | null;
+  brazaPagesUrl: string | null;
 }
 
 export default function DashboardPage() {
@@ -107,13 +108,21 @@ export default function DashboardPage() {
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-white font-semibold text-sm truncate">{p.title || 'Sem titulo'}</h2>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                      p.status === 'PUBLISHED' ? 'bg-green-900 text-green-400' :
-                      p.status === 'ARCHIVED' ? 'bg-red-900 text-red-400' :
-                      'bg-white/[0.04] text-zinc-400'
-                    }`}>
-                      {p.status}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        p.status === 'PUBLISHED' ? 'bg-green-900 text-green-400' :
+                        p.status === 'ARCHIVED' ? 'bg-red-900 text-red-400' :
+                        'bg-white/[0.04] text-zinc-400'
+                      }`}>
+                        {p.status}
+                      </span>
+                      {p.brazaPagesUrl && (
+                        <a href={p.brazaPagesUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-900 text-blue-400 hover:bg-blue-800 transition">
+                          braza.pages
+                        </a>
+                      )}
+                    </div>
                   </div>
                   <p className="text-zinc-500 text-xs mb-3">{new Date(p.createdAt).toLocaleDateString('pt-BR')}</p>
                   <div className="flex gap-2 flex-wrap">
