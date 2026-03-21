@@ -35,6 +35,7 @@ export default function NewPagePage() {
   const [generating, setGenerating] = useState(false);
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [customSlug, setCustomSlug] = useState('');
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
@@ -190,8 +191,9 @@ export default function NewPagePage() {
           body: JSON.stringify({ slug: customSlug }),
         });
       }
-      const res = await apiFetch<{ slug: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
+      const res = await apiFetch<{ slug: string; staticUrl?: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
       setPublishedSlug(res.slug);
+      setPublishedUrl(res.staticUrl || `${API_URL}/p/${res.slug}`);
       setStep(4);
     } catch (err) {
       alert('Erro ao publicar: ' + (err as Error).message);
@@ -384,11 +386,11 @@ export default function NewPagePage() {
         {step === 4 && publishedSlug && (
           <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
             <h2 className="text-white font-semibold mb-2">Pagina publicada!</h2>
-            <p className="text-emerald-500 text-sm mt-2">
-              {API_URL}/p/{publishedSlug}
+            <p className="text-emerald-500 text-sm mt-2 break-all">
+              {publishedUrl}
             </p>
             <div className="mt-6 flex gap-3 justify-center">
-              <a href={`${API_URL}/p/${publishedSlug}`}
+              <a href={publishedUrl || '#'}
                 target="_blank" className="px-6 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600">
                 Ver pagina
               </a>
