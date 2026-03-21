@@ -57,7 +57,8 @@ export class BrazaPagesService {
         return [];
       }
 
-      const domains = await response.json() as Array<{ id: string; domain: string; status: string }>;
+      const data = await response.json() as { domains?: Array<{ id: string; domain: string; status: string }> } | Array<{ id: string; domain: string; status: string }>;
+      const domains = Array.isArray(data) ? data : (data.domains || []);
       return domains
         .filter((d) => d.status === 'ACTIVE')
         .map(({ id, domain, status }) => ({ id, domain, status }));
