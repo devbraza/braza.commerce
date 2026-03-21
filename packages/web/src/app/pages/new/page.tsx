@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { apiFetch, getPageUrl } from '@/lib/api';
+import { apiFetch, getPageUrl, getPageUrlForAds } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -458,6 +458,17 @@ export default function NewPagePage() {
             <p className="text-emerald-500 text-sm mt-2 break-all">
               {publishedUrl}
             </p>
+
+            <div className="mt-4 card-glow bg-white/[0.02] rounded-lg border border-white/[0.06] p-4">
+              <p className="text-zinc-400 text-xs mb-2">Link para Facebook Ads (com parametros dinamicos):</p>
+              <p className="text-blue-400 text-xs break-all font-mono">{getPageUrlForAds(publishedSlug)}</p>
+              <button
+                onClick={() => { navigator.clipboard.writeText(getPageUrlForAds(publishedSlug)); }}
+                className="mt-3 px-4 py-2 bg-blue-900/50 text-blue-400 rounded-lg text-xs font-semibold hover:bg-blue-900 transition">
+                Copiar link para Ads
+              </button>
+            </div>
+
             <div className="mt-6 flex gap-3 justify-center">
               <a href={publishedUrl || '#'}
                 target="_blank" className="px-6 py-2 bg-emerald-500 text-white rounded-lg text-sm font-semibold hover:bg-emerald-600">

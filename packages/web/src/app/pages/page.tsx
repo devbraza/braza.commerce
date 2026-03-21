@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiFetch, getPageUrl } from '@/lib/api';
+import { apiFetch, getPageUrl, getPageUrlForAds } from '@/lib/api';
 import Link from 'next/link';
 
 interface PageItem {
@@ -44,6 +44,13 @@ export default function DashboardPage() {
     const url = getPageUrl(slug);
     navigator.clipboard.writeText(url);
     setCopied(slug);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const copyAdsLink = (slug: string) => {
+    const url = getPageUrlForAds(slug);
+    navigator.clipboard.writeText(url);
+    setCopied('ads-' + slug);
     setTimeout(() => setCopied(null), 2000);
   };
 
@@ -124,9 +131,14 @@ export default function DashboardPage() {
                       {p.status === 'PUBLISHED' ? 'Despublicar' : 'Publicar'}
                     </button>
                     {p.status === 'PUBLISHED' && (
-                      <button onClick={() => copyLink(p.slug)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
-                        {copied === p.slug ? 'Copiado!' : 'Copiar link'}
-                      </button>
+                      <>
+                        <button onClick={() => copyLink(p.slug)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
+                          {copied === p.slug ? 'Copiado!' : 'Copiar link'}
+                        </button>
+                        <button onClick={() => copyAdsLink(p.slug)} className="text-xs px-3 py-1 bg-blue-900/50 text-blue-400 rounded hover:bg-blue-900">
+                          {copied === 'ads-' + p.slug ? 'Copiado!' : 'Link Ads'}
+                        </button>
+                      </>
                     )}
                     {p.trackingEnabled && (
                       <Link href={`/pages/${p.id}/stats`} className="text-xs px-3 py-1 bg-emerald-900/50 text-emerald-400 rounded hover:bg-emerald-900">Metricas</Link>

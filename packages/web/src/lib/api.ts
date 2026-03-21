@@ -8,6 +8,11 @@ export function getPageUrl(slug: string): string {
   return `${PAGES_BASE_URL}/${slug}/`;
 }
 
+/** Build the URL with Facebook Ads dynamic macros ready to paste */
+export function getPageUrlForAds(slug: string): string {
+  return `${PAGES_BASE_URL}/${slug}/?utm_source=facebook&utm_medium=cpc&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}`;
+}
+
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit,
