@@ -37,15 +37,15 @@ export class StaticPageGeneratorService {
 
       if (existsSync(srcPath)) {
         await copyFile(srcPath, join(imgDir, filename));
-        // Replace absolute URL with relative path
-        html = html.split(img.url).join(`img/${filename}`);
+        // Replace absolute URL with path relative to page slug
+        html = html.split(img.url).join(`/p/${page.slug}/img/${filename}`);
       }
     }
 
-    // Fix preload tag to use relative path too
+    // Fix preload tag to use absolute path too
     if (images.length > 0) {
       const oldPreload = `href="${images[0].url}"`;
-      html = html.replace(oldPreload, `href="img/${images[0].position}.webp"`);
+      html = html.replace(oldPreload, `href="/p/${page.slug}/img/${images[0].position}.webp"`);
     }
 
     // Write HTML
