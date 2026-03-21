@@ -18,6 +18,7 @@ export class StaticPageGeneratorService {
   private readonly logger = new Logger(StaticPageGeneratorService.name);
   private readonly staticDir: string;
   private readonly uploadsDir: string;
+  private readonly fontsDir: string;
 
   constructor(
     private readonly renderService: RenderService,
@@ -25,6 +26,7 @@ export class StaticPageGeneratorService {
   ) {
     this.staticDir = process.env.STATIC_PAGES_DIR || '/var/www/static-pages';
     this.uploadsDir = join(process.cwd(), 'uploads', 'pages');
+    this.fontsDir = join(__dirname, '..', 'render', 'fonts');
     this.logger.log(`Static pages dir: ${this.staticDir}`);
   }
 
@@ -61,7 +63,18 @@ export class StaticPageGeneratorService {
   private async generateLocal(page: PageWithImages, campaignId?: string, campaignCheckoutUrl?: string): Promise<string> {
     const pageDir = join(this.staticDir, page.slug);
     const imgDir = join(pageDir, 'img');
+    const pageFontsDir = join(pageDir, 'fonts');
     await mkdir(imgDir, { recursive: true });
+    await mkdir(pageFontsDir, { recursive: true });
+
+    // Copy font files for self-hosting
+    const fontFiles = ['inter-400.woff2', 'inter-700.woff2'];
+    for (const fontFile of fontFiles) {
+      const src = join(this.fontsDir, fontFile);
+      if (existsSync(src)) {
+        await copyFile(src, join(pageFontsDir, fontFile));
+      }
+    }
 
     // Render HTML
     let html = this.renderService.render(page, campaignId, campaignCheckoutUrl);
