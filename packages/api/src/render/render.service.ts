@@ -113,7 +113,7 @@ export class RenderService {
     const apiBaseUrl = process.env.API_BASE_URL || 'https://api.brazachat.shop';
     const trackingScript = `
 <script>
-(typeof requestIdleCallback==='function'?requestIdleCallback:setTimeout)(function(){
+(function(){
   var API = ${JSON.stringify(apiBaseUrl)};
   var params = new URLSearchParams(window.location.search);
   var fbclid = params.get('fbclid');
@@ -124,15 +124,19 @@ export class RenderService {
     utmContent: params.get('utm_content'),
     utmTerm: params.get('utm_term')
   };
-  fetch(API + '/tracking/click', {
+
+  // Register click immediately on page load (not deferred)
+  var clickReady = fetch(API + '/tracking/click', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(Object.assign({ campaignId: ${JSON.stringify(campaignId)}, fbclid: fbclid }, utms))
   }).then(function(r){ return r.json(); }).then(function(data){
     window.__clickId = data.clickId;
     window.__fbclid = fbclid;
-  }).catch(function(){});
+    return data.clickId;
+  }).catch(function(){ return null; });
 
+  // Intercept ALL CTA clicks and inject metadata before redirect
   document.addEventListener('click', function(e){
     var btn = e.target.closest('a[href], button');
     if (!btn) return;
@@ -142,9 +146,12 @@ export class RenderService {
         var url = new URL(href, window.location.origin);
         if (url.origin !== window.location.origin) {
           e.preventDefault();
-          if (window.__clickId) url.searchParams.set('metadata[click_id]', window.__clickId);
-          if (window.__fbclid) url.searchParams.set('metadata[fbclid]', window.__fbclid);
-          window.location.href = url.toString();
+          // Wait for click registration to complete before redirecting
+          clickReady.then(function(clickId){
+            if (clickId) url.searchParams.set('metadata[click_id]', clickId);
+            if (fbclid) url.searchParams.set('metadata[fbclid]', fbclid);
+            window.location.href = url.toString();
+          });
         }
       } catch(ex){}
     }
