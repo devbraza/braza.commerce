@@ -1,11 +1,17 @@
-import { Controller, Post, Body, Req } from '@nestjs/common';
+import { Controller, Post, Body, Req, Logger } from '@nestjs/common';
 import { Request } from 'express';
 import { TrackingService } from './tracking.service';
+import { CapiService } from '../capi/capi.service';
 import { RegisterClickDto } from './dto/register-click.dto';
 
 @Controller('tracking')
 export class TrackingController {
-  constructor(private readonly tracking: TrackingService) {}
+  private readonly logger = new Logger(TrackingController.name);
+
+  constructor(
+    private readonly tracking: TrackingService,
+    private readonly capi: CapiService,
+  ) {}
 
   @Post('click')
   async registerClick(
@@ -26,6 +32,15 @@ export class TrackingController {
       utmContent: dto.utmContent,
       utmTerm: dto.utmTerm,
     });
+
+    // Fire ViewContent via Meta CAPI (server-side)
+    const clickWithCampaign = await this.tracking.getClickWithCampaign(result.clickId);
+    if (clickWithCampaign?.campaign) {
+      const pageUrl = req.headers['referer'] || '';
+      this.capi.sendViewContent(clickWithCampaign, clickWithCampaign.campaign, pageUrl as string).catch((err) => {
+        this.logger.error(`CAPI ViewContent error: ${err.message}`);
+      });
+    }
 
     return { clickId: result.clickId };
   }
