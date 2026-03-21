@@ -22,6 +22,7 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string | null>(null);
 
   const load = () => {
     apiFetch<CampaignItem[]>('/campaigns')
@@ -31,6 +32,15 @@ export default function CampaignsPage() {
   };
 
   useEffect(() => { load(); }, []);
+
+  const renameCampaign = async (id: string, newName: string) => {
+    if (!newName.trim()) return;
+    try {
+      await apiFetch(`/campaigns/${id}`, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) });
+      setCampaigns(campaigns.map((c) => c.id === id ? { ...c, name: newName.trim() } : c));
+    } catch { /* empty */ }
+    setEditingName(null);
+  };
 
   const toggleStatus = async (id: string, status: string) => {
     const action = status === 'ACTIVE' ? 'pause' : 'activate';
@@ -73,7 +83,21 @@ export default function CampaignsPage() {
             <div key={c.id} className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <h2 className="text-[15px] font-semibold text-white">{c.name}</h2>
+                  {editingName === c.id ? (
+                    <input
+                      autoFocus
+                      defaultValue={c.name}
+                      onBlur={(e) => renameCampaign(c.id, e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingName(null); }}
+                      className="text-[15px] font-semibold text-white bg-white/[0.06] rounded px-2 py-0.5 border border-white/[0.1] outline-none"
+                    />
+                  ) : (
+                    <h2
+                      onClick={() => setEditingName(c.id)}
+                      className="text-[15px] font-semibold text-white cursor-pointer hover:text-emerald-400 transition"
+                      title="Clique para renomear"
+                    >{c.name}</h2>
+                  )}
                   <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
                     c.status === 'ACTIVE'
                       ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 live-pulse'

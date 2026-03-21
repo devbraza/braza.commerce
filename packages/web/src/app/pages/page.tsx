@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [pages, setPages] = useState<PageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
 
   const load = async () => {
     try {
@@ -52,6 +53,15 @@ export default function DashboardPage() {
     navigator.clipboard.writeText(url);
     setCopied('ads-' + slug);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const renameTitle = async (id: string, newTitle: string) => {
+    if (!newTitle.trim()) return;
+    try {
+      await apiFetch(`/pages/${id}`, { method: 'PATCH', body: JSON.stringify({ title: newTitle.trim() }) });
+      setPages(pages.map((p) => p.id === id ? { ...p, title: newTitle.trim() } : p));
+    } catch { /* empty */ }
+    setEditingTitle(null);
   };
 
   const deletePage = async (id: string) => {
@@ -115,7 +125,21 @@ export default function DashboardPage() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-white font-semibold text-sm truncate">{p.title || 'Sem titulo'}</h2>
+                    {editingTitle === p.id ? (
+                      <input
+                        autoFocus
+                        defaultValue={p.title || ''}
+                        onBlur={(e) => renameTitle(p.id, e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditingTitle(null); }}
+                        className="text-white font-semibold text-sm bg-white/[0.06] rounded px-2 py-0.5 border border-white/[0.1] outline-none flex-1 mr-2"
+                      />
+                    ) : (
+                      <h2
+                        onClick={() => setEditingTitle(p.id)}
+                        className="text-white font-semibold text-sm truncate cursor-pointer hover:text-emerald-400 transition"
+                        title="Clique para renomear"
+                      >{p.title || 'Sem titulo'}</h2>
+                    )}
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                       p.status === 'PUBLISHED' ? 'bg-green-900 text-green-400' :
                       p.status === 'ARCHIVED' ? 'bg-red-900 text-red-400' :
