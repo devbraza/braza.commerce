@@ -41,6 +41,7 @@ model Page {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   publishedAt        DateTime?
+  staticUrl          String?
   images             PageImage[]
   campaigns          Campaign[]
 }

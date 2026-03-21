@@ -62,6 +62,7 @@ export class PagesService {
       status: p.status,
       createdAt: p.createdAt,
       publishedAt: p.publishedAt,
+      staticUrl: p.staticUrl,
       thumbnail: p.images[0]?.url || null,
     }));
   }
@@ -130,9 +131,18 @@ export class PagesService {
       include: { images: { orderBy: { position: 'asc' } } },
     });
 
-    // Generate static page
+    // Generate static page + deploy to Cloudflare Pages
     try {
-      await this.staticPages.generate(page);
+      const result = await this.staticPages.generate(page);
+      if (result.cloudflareUrl) {
+        const fullUrl = `${result.cloudflareUrl}/${page.slug}/`;
+        await this.prisma.page.update({
+          where: { id },
+          data: { staticUrl: fullUrl },
+        });
+        page.staticUrl = fullUrl;
+        this.logger.log(`Page ${page.slug} deployed to CF: ${fullUrl}`);
+      }
     } catch (err) {
       this.logger.error(`Failed to generate static page: ${err}`);
     }
@@ -144,10 +154,10 @@ export class PagesService {
     const page = await this.findOne(id);
     const result = await this.prisma.page.update({
       where: { id },
-      data: { status: 'ARCHIVED' },
+      data: { status: 'ARCHIVED', staticUrl: null },
     });
 
-    // Remove static page
+    // Remove static page (local + Cloudflare Pages)
     try {
       await this.staticPages.remove(page.slug);
     } catch (err) {
