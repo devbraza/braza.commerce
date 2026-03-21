@@ -33,17 +33,13 @@ export class YampiController {
 
       res.status(200).send('OK');
 
-      // Log full payload structure for debugging
       const body = req.body as Record<string, unknown>;
-      this.logger.log(`Yampi webhook payload keys: ${Object.keys(body).join(', ')}`);
-      this.logger.log(`Yampi webhook body: ${JSON.stringify(body).slice(0, 500)}`);
-
       const event = (body.event as string) || '';
-      const data = (body.data || body.resource || body) as Record<string, unknown>;
-      this.logger.log(`Yampi webhook received: ${event}, data keys: ${Object.keys(data).join(', ')}`);
+      const resource = (body.resource || body.data || body) as Record<string, unknown>;
+      this.logger.log(`Yampi webhook received: ${event}`);
+      this.logger.log(`Yampi webhook metadata: ${JSON.stringify(resource?.metadata)}`);
 
-      // Try multiple paths for metadata
-      const clickId = this.yampi.extractClickId(data);
+      const clickId = this.yampi.extractClickId(resource);
       if (!clickId) {
         this.logger.debug('Yampi webhook: no click_id in metadata, skipping tracking');
         return;
@@ -56,7 +52,7 @@ export class YampiController {
       }
 
       if (event === 'order.paid') {
-        const total = this.yampi.extractOrderTotal(data);
+        const total = this.yampi.extractOrderTotal(resource);
         await this.tracking.registerEvent(clickId, 'PURCHASE', total);
         // Fire Meta CAPI Purchase
         await this.capi.sendPurchase(clickWithCampaign, clickWithCampaign.campaign, total).catch((err) => {
