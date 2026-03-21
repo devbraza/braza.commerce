@@ -557,137 +557,186 @@ A LLM recebe as fotos e deve retornar um JSON estruturado:
 
 ---
 
-## 16. Roadmap v1.1 — Tracking, Pixel CAPI e Publicacao (20/03/2026)
+## 16. Roadmap v1.1 — Tracking e Publicacao (21/03/2026)
 
-### Feature 1: Tracking — Funil de conversao estilo RedTrack
+> **Pesquisa base:** `docs/research/yampi-integration-research.md` (Atlas/Analyst — 21/03/2026)
 
-**Objetivo:** Rastrear todo o funil clicks → offer page → checkout → compra com metricas em tempo real.
+### Principio: Pagina = Campanha
+
+Nao existe pagina sem campanha, nem campanha sem pagina. **Um fluxo so.** O usuario cria a landing page, configura o tracking, e publica — tudo junto, sem burocracia.
+
+---
+
+### Feature 1: Fluxo unificado (pagina + tracking)
+
+**Objetivo:** Criar landing page com tracking embutido em um unico fluxo.
+
+#### Fluxo do usuario
+
+```
+1. Sobe fotos do produto
+2. IA gera textos (nome, descricao, features, FAQ, depoimentos)
+3. Edita o que quiser
+4. Configura tracking:
+   - URL do checkout (Yampi)
+   - Pixel ID do Meta
+   - Access Token do Meta
+5. Publica
+
+Pronto. Landing page no ar com tracking funcionando.
+Zero configuracao extra. Zero codigo.
+```
+
+#### O que o sistema faz por baixo (invisivel pro usuario)
+
+1. **Gera o HTML** da landing page com script de tracking embutido
+2. Script e **especifico por pagina** — usa o Pixel ID configurado naquela pagina
+3. Script registra 2 eventos: `PAGE_VIEW` (abriu a pagina) e `CTA_CLICK` (clicou em comprar)
+4. No clique do CTA, redireciona pro checkout Yampi com `metadata[click_id]` e `metadata[fbclid]` na URL
+5. Deploya no Cloudflare Pages (edge global)
 
 #### Modelo de dados
 
-| Model | Campos principais |
-|-------|------------------|
-| **Campaign** | id, pageId (FK), name, checkoutUrl, pixelId, accessToken, status, createdAt |
-| **Click** | id, campaignId (FK), clickId (unique), fbclid, fbc, fbp, ip, userAgent, utmSource, utmMedium, utmCampaign, utmContent, utmTerm, createdAt |
-| **Event** | id, clickId (FK), type (enum: VIEW_CONTENT, INITIATE_CHECKOUT, PURCHASE), value, currency, metadata (Json), createdAt |
+| Model | Campos |
+|-------|--------|
+| **Page** (ja existe) | + `checkoutUrl` (String), `pixelId` (String), `accessToken` (String) |
+| **Click** (nova) | id, pageId (FK), clickId (unique, ex: ck_xxxxx), fbclid, ip, userAgent, utmSource, utmMedium, utmCampaign, createdAt |
+| **Event** (nova) | id, clickId (FK), type (enum: PAGE_VIEW, CTA_CLICK, CHECKOUT, PURCHASE), value (Decimal, nullable), currency (String, nullable), metadata (Json, nullable), createdAt |
 
-#### Fluxo completo
+> **Nota:** Nao existe tabela Campaign separada. Os campos de tracking ficam no model Page. Pagina = Campanha.
 
-```
-1. Usuario clica no anuncio (Facebook/Google)
-   → URL: braza.commerce/p/:slug?fbclid=xxx&utm_source=facebook
+#### Script de tracking (embutido no template HTML)
 
-2. Abre offer page (braza.commerce)
-   → Captura: fbclid, UTMs, IP, user-agent
-   → Gera click_id unico (ck_xxxxx)
-   → Registra Click no banco
-   → Dispara ViewContent server-side → Meta CAPI
+O script e injetado automaticamente no HTML gerado pelo `RenderService`. Cada pagina tem seu proprio script com o Pixel ID e pageId configurados.
 
-3. Clica "Comprar agora"
-   → Redirect para Yampi com metadata:
-     seguro.loja.com.br/r/PROD?metadata[click_id]=ck_xxxxx&metadata[fbclid]=xxx
+**Funcoes do script:**
 
-4. Compra concluida na Yampi
-   → Yampi envia webhook order.paid para braza.commerce
-   → Webhook contem metadata[click_id]
-   → Sistema conecta compra ao click original
-   → Registra Event type=PURCHASE
-   → Dispara Purchase server-side → Meta CAPI
+| Evento | Quando dispara | O que faz |
+|--------|---------------|-----------|
+| `PAGE_VIEW` | Pagina carrega | POST para `/api/track/view` com clickId, fbclid, UTMs, referrer |
+| `CTA_CLICK` | Lead clica em "Comprar" | POST para `/api/track/click` com clickId → redirect pro checkout Yampi com metadata |
 
-5. Dashboard mostra funil em tempo real
-```
+**Geracao do clickId:**
+
+- Gerado pelo script no browser quando a pagina carrega
+- Formato: `ck_` + 12 caracteres alfanumericos (ex: `ck_a1b2c3d4e5f6`)
+- Armazenado em `sessionStorage` pra persistir entre recargas da mesma sessao
 
 #### Endpoints novos
 
 | Metodo | Rota | Descricao |
 |--------|------|-----------|
-| POST | `/api/webhooks/yampi` | Recebe webhooks da Yampi (order.paid, order.created) |
-| GET | `/campaigns` | Listar campanhas |
-| POST | `/campaigns` | Criar campanha (pagina + checkout URL + pixel) |
-| GET | `/campaigns/:id/stats` | Metricas do funil em tempo real |
-| GET | `/campaigns/:id/clicks` | Lista de clicks com status |
-
-#### Dashboard — Metricas do funil
-
-```
-┌──────────────────────────────────────────┐
-│ Campanha: Coelha Pascoa                  │
-│ Periodo: Hoje | 7d | 30d | Custom       │
-│                                          │
-│ Cliques:        847                      │
-│ Offer Page:     823  (97.2%)             │
-│ Checkout:       312  (37.9%)             │
-│ Compras:         47  (15.1%)             │
-│                                          │
-│ Revenue:    R$ 3.753,00                  │
-│ CPA:        R$ 12.40                     │
-│ ROI:        6.4x                         │
-│ Ticket:     R$ 79.85                     │
-└──────────────────────────────────────────┘
-```
-
----
-
-### Feature 2: Pixel Server-Side (Meta Conversion API)
-
-**Objetivo:** Enviar eventos de conversao direto do servidor para o Facebook, sem depender do navegador do usuario.
-
-#### Eventos disparados pelo braza.commerce (server-side)
-
-| Evento | Quando | Dados enviados |
-|--------|--------|---------------|
-| **ViewContent** | Usuario abre offer page | fbclid, fbc, fbp, IP, user-agent, page URL, product name |
-| **Purchase** | Yampi envia webhook order.paid | fbclid, fbc, fbp, valor, moeda, click_id |
-
-#### Eventos disparados pela Yampi (client-side, automatico)
-
-| Evento | Quando |
-|--------|--------|
-| **InitiateCheckout** | Usuario acessa checkout |
-| **AddPaymentInfo** | Preenche dados de pagamento |
-
-#### Cobertura combinada
-
-| Etapa | Quem dispara | Tipo |
-|-------|-------------|------|
-| ViewContent | braza.commerce | Server-side (CAPI) |
-| InitiateCheckout | Yampi | Client-side (pixel) |
-| AddPaymentInfo | Yampi | Client-side (pixel) |
-| Purchase | braza.commerce | Server-side (CAPI) |
-
-**Resultado:** Cobertura completa mesmo com AdBlock, iOS 14+, browsers com protecao.
-
-#### Configuracao necessaria do usuario
-
-| Onde | O que fazer | Frequencia |
-|------|-----------|-----------|
-| **Yampi** | Criar 1 webhook apontando para braza.commerce | 1 vez |
-| **braza.commerce** | Informar Pixel ID + Access Token do Facebook | 1 vez |
-| **braza.commerce** | Associar campanha a pagina + checkout URL | Por produto |
-
-#### Integracao com Yampi — Detalhes tecnicos
-
-| Aspecto | Detalhe |
-|---------|---------|
-| **Webhook URL** | `POST /api/webhooks/yampi` |
-| **Eventos** | `order.created`, `order.paid`, `transaction.payment.refused` |
-| **Validacao** | Header `X-Yampi-Hmac-SHA256` com HMAC-SHA256 da secret key |
-| **Metadata** | `metadata[click_id]` e `metadata[fbclid]` passados na URL do checkout |
-| **API Yampi** | `POST https://api.dooki.com.br/v2/{alias}/webhooks` para criar webhook via API |
+| POST | `/api/track/view` | Registra PAGE_VIEW (script da landing envia) |
+| POST | `/api/track/click` | Registra CTA_CLICK (script da landing envia) |
+| POST | `/api/webhooks/yampi` | Recebe webhooks da Yampi (order.created + order.paid) |
+| GET | `/api/pages/:id/stats` | Metricas do funil da pagina |
 
 #### Metadata na URL do checkout (automatico)
 
 ```
-URL base (usuario configura):
+URL base (usuario configura na criacao da pagina):
 https://seguro.loja.yampi.com.br/r/PRODUTO
 
-URL final (sistema gera automaticamente):
-https://seguro.loja.yampi.com.br/r/PRODUTO?metadata[click_id]=ck_abc123&metadata[fbclid]=fb_xyz&metadata[utm_source]=facebook&metadata[utm_campaign]=pascoa
+URL final (script gera automaticamente no clique do CTA):
+https://seguro.loja.yampi.com.br/r/PRODUTO?metadata[click_id]=ck_a1b2c3d4e5f6&metadata[fbclid]=fb_xyz
 ```
+
+A Yampi grava esses dados no pedido e **retorna automaticamente** no webhook `order.paid`.
 
 ---
 
-### Feature 3: Publicacao com slug customizada
+### Feature 2: Webhook Yampi (fundo de funil)
+
+**Objetivo:** Receber notificacao de compra da Yampi e fechar o funil.
+
+#### Integracao com Yampi
+
+| Aspecto | Detalhe |
+|---------|---------|
+| **Webhook URL** | `POST https://api.brazachat.shop/api/webhooks/yampi` |
+| **Evento** | `order.created` (checkout iniciado) + `order.paid` (compra confirmada) |
+| **Validacao** | Header `X-Yampi-Hmac-SHA256` com HMAC-SHA256 da secret key |
+| **Metadata no payload** | `metadata[click_id]` e `metadata[fbclid]` — incluidos automaticamente pela Yampi |
+| **Processamento** | Aceitar webhook (HTTP 200) imediatamente, processar async |
+
+#### Fluxo do webhook
+
+```
+1. Lead compra no checkout Yampi
+2. Yampi dispara POST /api/webhooks/yampi
+   - order.created → Registra Event type=CHECKOUT
+   - order.paid → Registra Event type=PURCHASE com valor do pedido
+3. braza.commerce valida HMAC-SHA256
+4. Extrai metadata[click_id] do payload
+5. Busca o Click original pelo clickId
+6. Registra Event correspondente
+7. Funil fechado: PAGE_VIEW → CTA_CLICK → CHECKOUT → PURCHASE
+```
+
+#### Configuracao unica na Yampi (feita 1 vez pelo usuario)
+
+```
+1. Painel Yampi → Configuracoes → Webhooks
+2. + Novo webhook
+3. Nome: "braza.commerce"
+4. URL: https://api.brazachat.shop/api/webhooks/yampi
+5. Eventos: Pedido criado (order.created) + Pedido aprovado (order.paid)
+6. Salvar
+7. Copiar secret key → colar no braza.commerce (tela de configuracoes)
+```
+
+**Nada mais. Sem pixel, sem codigo, sem configuracao complicada.**
+
+> **Meta CAPI:** A Yampi ja possui integracao nativa com Meta Conversion API. Ela dispara automaticamente ViewContent, InitiateCheckout, AddPaymentInfo e Purchase no checkout. O braza.commerce NAO precisa disparar eventos CAPI pro checkout — a Yampi ja cuida disso.
+
+---
+
+### Feature 3: Dashboard de tracking
+
+**Objetivo:** Mostrar metricas do funil em tempo real por pagina.
+
+#### Metricas do dashboard
+
+| Metrica | De onde vem | Calculo |
+|---------|-------------|---------|
+| **Page Views** | Event type=PAGE_VIEW | Contagem |
+| **CTA Clicks** | Event type=CTA_CLICK | Contagem |
+| **Checkouts** | Event type=CHECKOUT | Contagem |
+| **Compras** | Event type=PURCHASE | Contagem |
+| **Revenue** | Event type=PURCHASE (campo value) | Soma |
+| **Conversao** | Compras / Page Views | Percentual |
+| **Ticket medio** | Revenue / Compras | Media |
+
+#### Wireframe do dashboard
+
+```
+┌──────────────────────────────────────────┐
+│ Pagina: Coelha Pascoa                    │
+│ Periodo: Hoje | 7d | 30d | Custom       │
+│                                          │
+│ Page Views:     847                      │
+│ CTA Clicks:     312  (36.8%)             │
+│ Checkouts:      158  (18.7%)             │
+│ Compras:         47  (5.5%)              │
+│                                          │
+│ Revenue:    R$ 3.753,00                  │
+│ Ticket:     R$ 79,85                     │
+│ Conversao:  5.5%                         │
+└──────────────────────────────────────────┘
+```
+
+#### Filtro por periodo
+
+| Filtro | Descricao |
+|--------|-----------|
+| Hoje | Ultimas 24h |
+| 7d | Ultimos 7 dias |
+| 30d | Ultimos 30 dias |
+| Custom | Data inicio + data fim |
+
+---
+
+### Feature 4: Publicacao com slug customizada
 
 **Objetivo:** Usuario define a URL da pagina ao publicar.
 
@@ -696,7 +745,7 @@ https://seguro.loja.yampi.com.br/r/PRODUTO?metadata[click_id]=ck_abc123&metadata
 | Campo de slug editavel no momento de publicar | Input com preview da URL final |
 | Validacao de slug unico | Erro se slug ja existe |
 | Caracteres permitidos | Letras minusculas, numeros, hifens |
-| Preview em tempo real | `braza.commerce/p/meu-produto-pascoa` |
+| Preview em tempo real | `braza-commerce-pages.pages.dev/meu-produto` |
 | Slug automatico como fallback | Se nao preencher, gera automatico |
 
 ---
@@ -706,34 +755,34 @@ https://seguro.loja.yampi.com.br/r/PRODUTO?metadata[click_id]=ck_abc123&metadata
 | Epic | Nome | Complexidade | Depende de |
 |------|------|-------------|-----------|
 | E6 | Slug customizada | Baixa | — |
-| E7 | Tracking (Campaign + Click + Funil) | Media-alta | E6 |
-| E8 | Pixel Server-Side (Meta CAPI) | Alta | E7 |
-| E9 | Dashboard de metricas (estilo RedTrack) | Media | E7, E8 |
-| E10 | Integracao Yampi (webhook + metadata) | Media | E7 |
+| E7 | Fluxo unificado: pagina + tracking (schema + script + endpoints) | Media-alta | E6 |
+| E8 | Webhook Yampi (order.created + order.paid + metadata) | Media | E7 |
+| E9 | Dashboard de tracking (metricas em tempo real) | Media | E7, E8 |
+
+> **Nota:** Epics de Meta CAPI server-side e carrinho abandonado ficam pra v1.2. A Yampi ja cobre CAPI no checkout nativamente.
 
 ---
 
-### Configuracao na Yampi (passo a passo para o usuario)
+### Fora do escopo v1.1 (v1.2+)
 
-```
-1. Painel Yampi → Configuracoes → Webhooks
-2. + Novo webhook
-3. Nome: "braza.commerce"
-4. URL: https://seu-dominio.com/api/webhooks/yampi
-5. Eventos: Pedido criado + Pedido aprovado
-6. Salvar
-7. Copiar secret key → colar no braza.commerce
-```
-
-**Nada mais. Sem pixel, sem codigo, sem configuracao complicada.**
+| Feature | Motivo |
+|---------|--------|
+| Meta CAPI server-side (ViewContent) | Client-side suficiente pro MVP |
+| Meta CAPI server-side (Purchase) | Yampi ja faz nativamente |
+| Carrinho abandonado (cart.reminder) | v1.2 |
+| Pagamento recusado (transaction.payment.refused) | v1.2 |
+| Reconciliacao via API Yampi | v1.2 (seguranca contra webhook perdido) |
+| Link de tracking com redirect intermediario | Desnecessario — script na landing ja cobre |
 
 ---
 
-### Requisito de UX/UI — Layout identico ao tracker.braza
+### Requisito de UX/UI — Referencia visual tracker.braza
 
 > **Spec completa:** `docs/architecture/UX-SPEC-v1.1.md` (aprovada por Uma/UX — 20/03/2026)
 
-**Regra:** Todas as telas da v1.1 devem seguir **exatamente** o layout do tracker.braza. Mesmos componentes, cores, tipografia, animacoes e estrutura.
+> **IMPORTANTE:** O tracker.braza serve **apenas como referencia visual** para o braza.commerce. Nao existe integracao, dependencia nem relacao funcional entre os dois produtos. O tracking da v1.1 e funcionalidade nativa do braza.commerce — o tracker.braza e usado somente como inspiracao de design (layout, componentes, cores, tipografia).
+
+**Regra:** Todas as telas da v1.1 devem seguir o layout do tracker.braza como referencia visual. Mesmos componentes, cores, tipografia, animacoes e estrutura.
 
 | Elemento | Padrao tracker.braza |
 |----------|---------------------|
@@ -755,17 +804,111 @@ https://seguro.loja.yampi.com.br/r/PRODUTO?metadata[click_id]=ck_abc123&metadata
 
 | Tela | Rota | Layout |
 |------|------|--------|
-| Paginas | `/pages` | Grid cards com card-glow (ajustar para sidebar) |
-| Criar pagina | `/pages/new` | Form steps (ja existe, mover para layout com sidebar) |
-| Campanhas | `/campaigns` | Lista cards full-width com badges e mini metricas |
-| Criar campanha | `/campaigns/new` | Form com dropdown + inputs tracker-style |
-| Metricas | `/metrics` | 4 KPI primarios + 3 secundarios + funil + tabela conversoes |
-| Eventos | `/events` | Tabela estilo tracker.braza (timestamp, click_id, type, valor) |
-| Configuracoes | `/settings` | Secoes Yampi + Meta Pixel com status live-pulse |
+| Paginas | `/pages` | Grid cards com mini metricas (views, clicks, compras) |
+| Criar pagina | `/pages/new` | Form steps unificado (fotos + textos + tracking config) |
+| Dashboard | `/pages/:id/stats` | KPIs + funil + filtro por periodo |
+| Configuracoes | `/settings` | Secao Yampi (webhook secret key) |
 
 ---
 
-*PRD-001 braza.commerce v1.0 + v1.1 Roadmap — 20/03/2026*
-*Morgan (PM) + Aria (Architect) + Uma (UX) + Dex (Dev) + Quinn (QA) + Gage (DevOps)*
+---
+
+### Epics v1.2 — Cloudflare Pages + Performance + UX (entregue 21/03/2026)
+
+> **Changelog completo:** `docs/changelog/2026-03-21-cloudflare-pages.md`
+
+#### E11 — Cloudflare Pages Deploy (landing pages no edge global)
+
+**Problema resolvido:** Landing pages servidas pelo Hetzner (Europa) tinham TTFB ~200ms pro Brasil. Nenhuma otimizacao de codigo resolve — o problema era distancia fisica.
+
+**Solucao:** Deploy automatico das landing pages no Cloudflare Pages (edge global, incluindo Sao Paulo). braza.commerce continua no Hetzner como ferramenta de criacao.
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E11-01: Deploy via Wrangler CLI | DONE | CloudflarePagesService com execFile (sem shell injection) |
+| FR-E11-02: Deploy atomico (todas as paginas juntas) | DONE | Cada publish inclui TODAS as paginas publicadas |
+| FR-E11-03: Campo staticUrl no banco | DONE | Prisma migration, salvo no publish, limpo no unpublish |
+| FR-E11-04: Fallback local (Nginx) | DONE | Geracao local mantida como fallback |
+| FR-E11-05: Validacao de deploy (stdout Wrangler) | DONE | Erro se "Success" nao encontrado |
+| NFR-E11-01: TTFB < 50ms do Brasil | DONE | Cloudflare edge SP |
+| NFR-E11-02: Zero shell injection | DONE | execFile com args array |
+
+#### E12 — Performance FCP (2.6s → <0.5s)
+
+**Problema resolvido:** FCP de 2.6s causado por Google Fonts (3 requests externos) e CSS render-blocking (128KB de fonts base64 inline).
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E12-01: Self-host fonte Inter | DONE | woff2 servidos do CF Pages edge, zero Google Fonts |
+| FR-E12-02: Reduzir pesos da fonte 4→2 | DONE | Apenas 400 + 700, font-weight 600/800 trocados por 700 |
+| FR-E12-03: Inline LCP image (base64) | DONE | Primeira imagem do carousel inline, preload removido |
+| FR-E12-04: Fonts como arquivos separados | DONE | Removido base64 do CSS, font-display: swap |
+| NFR-E12-01: FCP < 0.5s | DONE | Render delay 1.270ms eliminado |
+| NFR-E12-02: Zero requests externos | DONE | Tudo servido do CF Pages edge |
+
+#### E13 — UX Congruencia + Otimizacao de Conversao
+
+**Problema resolvido:** Inconsistencias visuais (3 tons de cinza, 3 border-radius, backgrounds diferentes) e oportunidades de conversao nao exploradas.
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E13-01: Unificar cores secundarias | DONE | Todos textos secundarios em #999 |
+| FR-E13-02: Unificar backgrounds de cards | DONE | Todos em #fafafa |
+| FR-E13-03: Consolidar border-radius | DONE | Apenas 8px (cards) e 12px (CTAs) |
+| FR-E13-04: Variar copy dos 3 CTAs | DONE | "Comprar agora" / "Quero o meu" / "Garantir com desconto" |
+| FR-E13-05: Avaliacoes dinamicas por produto | DONE | 120-320 range, hash-based |
+| FR-E13-06: Timer persistente (sessionStorage) | DONE | Nao reseta ao recarregar, reseta em nova sessao |
+| FR-E13-07: Remover texto sazonal | DONE | "Estoque limitado" sem referencia a Pascoa |
+
+#### E14 — Paginas Legais Estaticas
+
+**Problema resolvido:** Links do footer (privacy, terms, refund, contact) levavam a 404. Lead clica → ve erro → perde confianca.
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E14-01: Politica de Privacidade (LGPD) | DONE | /privacy/ no CF Pages |
+| FR-E14-02: Termos de Uso (e-commerce) | DONE | /terms/ no CF Pages |
+| FR-E14-03: Trocas e Devolucoes (CDC 7 dias) | DONE | /refund/ no CF Pages |
+| FR-E14-04: Contato (email + formulario) | DONE | /contact/ no CF Pages |
+| FR-E14-05: Links absolutos no template | DONE | URLs absolutas do CF Pages |
+| FR-E14-06: Incluidas no deploy atomico | DONE | CloudflarePagesService copia legal pages |
+
+#### E15 — Frontend: URL CF Pages no Dashboard
+
+**Problema resolvido:** Dashboard mostrava URL do Hetzner (api.brazachat.shop/p/slug) em vez da URL do CF Pages. Lead recebia link lento.
+
+| Requisito | Status | Detalhes |
+|-----------|--------|----------|
+| FR-E15-01: getPageUrl() helper deterministico | DONE | Fonte unica de verdade em api.ts |
+| FR-E15-02: Tela de publicacao mostra CF Pages URL | DONE | Step 4 usa publishedUrl via getPageUrl() |
+| FR-E15-03: Botao "Copiar link" usa CF Pages URL | DONE | copyLink() usa getPageUrl() |
+| FR-E15-04: Sem dependencia de staticUrl da API | DONE | URL construida no frontend, nao depende do backend |
+
+#### Metricas de resultado v1.2
+
+| Metrica | Antes | Depois |
+|---------|-------|--------|
+| TTFB (Brasil) | ~200ms | <50ms |
+| FCP | 2.6s | <0.5s |
+| Requests externos | 3 | 0 |
+| Render delay | 1.270ms | 0ms |
+| Links legais quebrados | 4 | 0 |
+| Consistencia visual | 3 tons cinza, 3 radius | 1 tom, 2 radius |
+
+#### QA Reviews v1.2
+
+| Review | Gate | Resultado |
+|--------|------|-----------|
+| v7: Deploy atomico + seguranca | FAIL → PASS | 6 issues corrigidas |
+| v8: Imports + dead code | CONCERNS → PASS | 2 issues corrigidas |
+| v9: FCP fonts + LCP | CONCERNS → PASS | 3 fixes aplicados |
+| v10: Render delay fonts | CONCERNS → PASS | 1 fix aplicado |
+| v11: UX congruencia + conversao | CONCERNS → PASS | 7 fixes aplicados |
+
+---
+
+*PRD-001 braza.commerce v1.0 + v1.1 + v1.2 Roadmap — 21/03/2026*
+*Morgan (PM) + Atlas (Analyst) + Aria (Architect) + Uma (UX) + Dex (Dev) + Quinn (QA) + Gage (DevOps)*
 *v1.0: Next.js 15 + NestJS + Prisma + PostgreSQL + Claude API*
-*v1.1: + Tracking + Meta CAPI + Yampi webhooks + Dashboard RedTrack-style + Layout tracker.braza*
+*v1.1: + Fluxo unificado (pagina=campanha) + Tracking nativo + Webhook Yampi + Dashboard metricas*
+*v1.2: + Cloudflare Pages (edge global) + FCP <0.5s + UX congruencia + Paginas legais*

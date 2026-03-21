@@ -1,9 +1,17 @@
-# braza.commerce v1.1 — Plano de Execucao
+# braza.commerce v1.1 — Plano de Execucao (REVISADO)
 
 > PRD: `docs/prd/PRD-001-braza-commerce-v1.md` (secao 16)
-> Arquitetura: `docs/architecture/ARCHITECTURE-braza-commerce-v1.1.md`
-> UX Spec: `docs/architecture/UX-SPEC-v1.1.md`
-> Data: 20/03/2026 | River (SM)
+> Arquitetura: `docs/architecture/ARCHITECTURE-tracking-v1.1.md`
+> Pesquisa: `docs/research/yampi-integration-research.md`
+> Data: 21/03/2026 | River (SM) | Revisado com base na analise da Aria (Architect)
+
+---
+
+## Contexto
+
+A Aria identificou que **a maior parte do tracking ja esta implementada** no codebase (Campaign, Click, Event, TrackingService, CapiService, YampiController). O trabalho e de **integracao e polish**, nao construcao from scratch.
+
+Decisao arquitetural: **Opcao B** — manter Campaign, tornar transparente. O frontend unifica o fluxo (Pagina = Campanha), mas o backend mantem a separacao interna.
 
 ---
 
@@ -11,52 +19,40 @@
 
 ### Epic 6 — Publicacao
 
-| Story | Nome | Prioridade | Depende de |
-|-------|------|-----------|-----------|
-| E6.1 | Slug customizada | MUST | — |
+| Story | Nome | Status | Depende de |
+|-------|------|--------|-----------|
+| E6.1 | Slug customizada | Ready for Review | — |
 
-### Epic 7 — Tracking
+### Epic 7 — Fluxo Unificado (pagina + tracking)
 
-| Story | Nome | Prioridade | Depende de |
-|-------|------|-----------|-----------|
-| E7.1 | Layout sidebar (tracker.braza) | MUST | — |
-| E7.2 | CRUD campanhas + schema | MUST | E7.1 |
-| E7.3 | Click tracking na offer page | MUST | E7.2 |
+| Story | Nome | Status | Depende de |
+|-------|------|--------|-----------|
+| E7.1 | Campaign automatica no backend | Draft | E6.1 |
+| E7.2 | Campos de tracking no frontend | Draft | E7.1 |
 
-### Epic 8 — Pixel Server-Side
+### Epic 8 — Webhook Yampi
 
-| Story | Nome | Prioridade | Depende de |
-|-------|------|-----------|-----------|
-| E8.1 | Meta Conversion API | MUST | E7.3 |
+| Story | Nome | Status | Depende de |
+|-------|------|--------|-----------|
+| E8.1 | Env var + hardening (idempotencia, logs) | Draft | E7.1 |
 
 ### Epic 9 — Dashboard
 
-| Story | Nome | Prioridade | Depende de |
-|-------|------|-----------|-----------|
-| E9.1 | Dashboard metricas (RedTrack) | MUST | E7.2, E7.3 |
-
-### Epic 10 — Yampi
-
-| Story | Nome | Prioridade | Depende de |
-|-------|------|-----------|-----------|
-| E10.1 | Webhook Yampi | MUST | E7.3 |
-| E10.2 | Pagina configuracoes | MUST | E7.1, E10.1 |
+| Story | Nome | Status | Depende de |
+|-------|------|--------|-----------|
+| E9.1 | Dashboard de tracking por pagina | Draft | E7.1, E7.2, E8.1 |
 
 ---
 
 ## Grafo de dependencias
 
 ```
-E6.1 (slug) ─────────────────────────────────────
-
-E7.1 (sidebar layout)
-  └→ E7.2 (campaigns CRUD + schema)
-       ├→ E7.3 (click tracking)
-       │    ├→ E8.1 (Meta CAPI)
-       │    ├→ E10.1 (Yampi webhook)
-       │    │    └→ E10.2 (settings page)
-       │    └→ E9.1 (dashboard metricas)
-       └→ E9.1 (dashboard metricas)
+E6.1 (slug) ✅ Ready for Review
+  └→ E7.1 (campaign auto backend)
+       ├→ E7.2 (tracking frontend)
+       │    └→ E9.1 (dashboard)
+       └→ E8.1 (webhook hardening)
+            └→ E9.1 (dashboard)
 ```
 
 ---
@@ -65,14 +61,29 @@ E7.1 (sidebar layout)
 
 | Onda | Stories | Paralelo? |
 |------|---------|-----------|
-| **1** | E6.1 (slug) + E7.1 (sidebar) | SIM |
-| **2** | E7.2 (campaigns + schema) | Nao |
-| **3** | E7.3 (click tracking) | Nao |
-| **4** | E8.1 (CAPI) + E10.1 (Yampi) + E9.1 (dashboard) | SIM |
-| **5** | E10.2 (settings) | Nao |
+| **1** | E6.1 (slug) | Ja em review |
+| **2** | E7.1 (campaign auto backend) | Nao |
+| **3** | E7.2 (tracking frontend) + E8.1 (webhook hardening) | SIM |
+| **4** | E9.1 (dashboard) | Nao |
 
-**Total: 8 stories | 5 ondas | 8 MUST**
+**Total: 5 stories | 4 ondas | 5 MUST**
 
 ---
 
-*Plano de execucao v1.1 — River (SM) — 20/03/2026*
+## Comparacao com plano anterior
+
+| Antes (8 stories, 5 ondas) | Agora (5 stories, 4 ondas) | Motivo |
+|----------------------------|---------------------------|--------|
+| E7.1 Layout sidebar | REMOVIDA | Layout sera aplicado nas stories de frontend |
+| E7.2 CRUD campanhas + schema | REMOVIDA | Schema ja existe, Campaign auto em E7.1 |
+| E7.3 Click tracking | REMOVIDA | TrackingService ja implementado |
+| E8.1 Meta CAPI | REMOVIDA | CapiService ja existe + Yampi faz nativamente |
+| E10.1 Webhook Yampi | Virou E8.1 (hardening) | Webhook ja existe, so precisa config |
+| E10.2 Settings page | REMOVIDA | Config via env var, settings minimo |
+
+**Reducao: 8 → 5 stories, 5 → 4 ondas**
+
+---
+
+*Plano de execucao v1.1 (revisado) — River (SM) — 21/03/2026*
+*Baseado na analise arquitetural da Aria (Architect) — 21/03/2026*
