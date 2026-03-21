@@ -61,13 +61,25 @@ export class TrackingService {
       this.logger.warn(`Click not found: ${clickId}`);
       return null;
     }
-    return this.prisma.event.create({
+
+    // Idempotency check: skip if event already exists for this click + type
+    const existing = await this.prisma.event.findFirst({
+      where: { clickId: click.id, type: type as EventType },
+    });
+    if (existing) {
+      this.logger.warn(`Duplicate event skipped: ${type} for click ${clickId}`);
+      return existing;
+    }
+
+    const event = await this.prisma.event.create({
       data: {
         clickId: click.id,
         type: type as EventType,
         value: value || null,
       },
     });
+    this.logger.log(`Event registered: ${type} for click ${clickId}${value ? ` value=${value}` : ''}`);
+    return event;
   }
 
   async getClickWithCampaign(clickId: string) {

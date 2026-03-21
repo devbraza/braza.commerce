@@ -22,6 +22,14 @@ export class UpdatePageDto {
 
   @IsOptional()
   @IsString()
+  pixelId?: string;
+
+  @IsOptional()
+  @IsString()
+  accessToken?: string;
+
+  @IsOptional()
+  @IsString()
   slug?: string;
 
   @IsOptional()

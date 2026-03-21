@@ -20,10 +20,11 @@ export class YampiController {
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
     try {
       const config = await this.settings.getRaw();
+      const secretKey = process.env.YAMPI_WEBHOOK_SECRET || config.yampiSecretKey;
       const signature = req.headers['x-yampi-hmac-sha256'] as string;
 
-      if (config.yampiSecretKey && signature) {
-        if (!this.yampi.validateSignature(req.body, signature, config.yampiSecretKey)) {
+      if (secretKey && signature) {
+        if (!this.yampi.validateSignature(req.body, signature, secretKey)) {
           this.logger.warn('Yampi webhook: invalid HMAC signature');
           return res.status(401).send('Invalid signature');
         }

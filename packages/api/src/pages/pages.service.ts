@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/services/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { StaticPageGeneratorService } from '../static-pages/static-page-generator.service';
+import { CampaignsService } from '../campaigns/campaigns.service';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 import slugify from 'slugify';
@@ -16,6 +17,7 @@ export class PagesService {
     private readonly prisma: PrismaService,
     private readonly upload: UploadService,
     private readonly staticPages: StaticPageGeneratorService,
+    private readonly campaignsService: CampaignsService,
   ) {}
 
   private generateSlug(title?: string): string {
@@ -37,7 +39,7 @@ export class PagesService {
 
   async create(dto: CreatePageDto) {
     const slug = await this.ensureUniqueSlug(this.generateSlug(dto.title));
-    return this.prisma.page.create({
+    const page = await this.prisma.page.create({
       data: {
         slug,
         title: dto.title,
@@ -46,6 +48,20 @@ export class PagesService {
         checkoutUrl: dto.checkoutUrl,
       },
     });
+
+    // Auto-create Campaign if tracking fields provided
+    if (dto.checkoutUrl) {
+      await this.campaignsService.create({
+        pageId: page.id,
+        name: dto.title || page.slug,
+        checkoutUrl: dto.checkoutUrl,
+        pixelId: dto.pixelId,
+        accessToken: dto.accessToken,
+      });
+      this.logger.log(`Auto-created campaign for page ${page.slug}`);
+    }
+
+    return page;
   }
 
   async findAll() {
@@ -53,18 +69,30 @@ export class PagesService {
       orderBy: { createdAt: 'desc' },
       include: {
         images: { where: { position: 1 }, take: 1 },
+        campaigns: {
+          where: { status: 'ACTIVE' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { id: true, checkoutUrl: true, pixelId: true },
+        },
       },
     });
-    return pages.map((p) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      status: p.status,
-      createdAt: p.createdAt,
-      publishedAt: p.publishedAt,
-      staticUrl: p.staticUrl,
-      thumbnail: p.images[0]?.url || null,
-    }));
+    return pages.map((p) => {
+      const campaign = p.campaigns[0] || null;
+      return {
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        status: p.status,
+        createdAt: p.createdAt,
+        publishedAt: p.publishedAt,
+        staticUrl: p.staticUrl,
+        thumbnail: p.images[0]?.url || null,
+        trackingEnabled: !!campaign,
+        checkoutUrl: campaign?.checkoutUrl || p.checkoutUrl || null,
+        pixelId: campaign?.pixelId || null,
+      };
+    });
   }
 
   async findOne(id: string) {
@@ -77,7 +105,7 @@ export class PagesService {
   }
 
   async update(id: string, dto: UpdatePageDto) {
-    await this.findOne(id);
+    const page = await this.findOne(id);
     const data: Record<string, unknown> = {};
     if (dto.title !== undefined) data.title = dto.title;
     if (dto.price !== undefined) data.price = dto.price;
@@ -91,7 +119,30 @@ export class PagesService {
         if (available) data.slug = sanitized;
       }
     }
-    return this.prisma.page.update({ where: { id }, data });
+    const updated = await this.prisma.page.update({ where: { id }, data });
+
+    // Auto-create or update Campaign if tracking fields provided
+    if (dto.checkoutUrl !== undefined || dto.pixelId !== undefined || dto.accessToken !== undefined) {
+      const existing = await this.campaignsService.findActiveByPageId(id);
+      if (existing) {
+        await this.campaignsService.update(existing.id, {
+          ...(dto.checkoutUrl !== undefined && { checkoutUrl: dto.checkoutUrl }),
+          ...(dto.pixelId !== undefined && { pixelId: dto.pixelId }),
+          ...(dto.accessToken !== undefined && { accessToken: dto.accessToken }),
+        });
+      } else if (dto.checkoutUrl) {
+        await this.campaignsService.create({
+          pageId: id,
+          name: updated.title || updated.slug,
+          checkoutUrl: dto.checkoutUrl,
+          pixelId: dto.pixelId,
+          accessToken: dto.accessToken,
+        });
+        this.logger.log(`Auto-created campaign for page ${updated.slug}`);
+      }
+    }
+
+    return updated;
   }
 
   async remove(id: string) {
@@ -111,7 +162,7 @@ export class PagesService {
   async duplicate(id: string) {
     const original = await this.findOne(id);
     const slug = await this.ensureUniqueSlug(this.generateSlug(original.title || undefined));
-    return this.prisma.page.create({
+    const duplicated = await this.prisma.page.create({
       data: {
         slug,
         title: original.title,
@@ -121,6 +172,21 @@ export class PagesService {
         aiGeneratedContent: original.aiGeneratedContent as Prisma.InputJsonValue,
       },
     });
+
+    // Copy tracking campaign if original has one
+    const originalCampaign = await this.campaignsService.findActiveByPageId(id);
+    if (originalCampaign) {
+      await this.campaignsService.create({
+        pageId: duplicated.id,
+        name: duplicated.title || duplicated.slug,
+        checkoutUrl: originalCampaign.checkoutUrl,
+        pixelId: originalCampaign.pixelId || undefined,
+        accessToken: originalCampaign.accessToken || undefined,
+      });
+      this.logger.log(`Copied campaign to duplicated page ${duplicated.slug}`);
+    }
+
+    return duplicated;
   }
 
   async publish(id: string) {
@@ -131,9 +197,16 @@ export class PagesService {
       include: { images: { orderBy: { position: 'asc' } } },
     });
 
+    // Find active campaign for tracking injection
+    const campaign = await this.campaignsService.findActiveByPageId(id);
+
     // Generate static page + deploy to Cloudflare Pages
     try {
-      const result = await this.staticPages.generate(page);
+      const result = await this.staticPages.generate(
+        page,
+        campaign?.id,
+        campaign?.checkoutUrl,
+      );
       if (result.cloudflareUrl) {
         const fullUrl = `${result.cloudflareUrl}/${page.slug}/`;
         await this.prisma.page.update({

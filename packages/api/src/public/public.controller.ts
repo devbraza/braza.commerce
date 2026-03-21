@@ -26,7 +26,7 @@ export class PublicController {
       return res.send(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Pagina nao encontrada</title></head><body style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Inter,sans-serif;background:#f4f4f5;color:#999;"><p>Pagina nao encontrada</p></body></html>`);
     }
 
-    const campaign = await this.campaigns.findActiveByCampaignPage(page.id);
+    const campaign = await this.campaigns.findActiveByPageId(page.id);
     const html = this.render.render(
       page,
       campaign?.id,

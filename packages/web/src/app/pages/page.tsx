@@ -13,6 +13,7 @@ interface PageItem {
   publishedAt: string | null;
   staticUrl: string | null;
   thumbnail: string | null;
+  trackingEnabled?: boolean;
 }
 
 export default function DashboardPage() {
@@ -126,6 +127,9 @@ export default function DashboardPage() {
                       <button onClick={() => copyLink(p.slug)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">
                         {copied === p.slug ? 'Copiado!' : 'Copiar link'}
                       </button>
+                    )}
+                    {p.trackingEnabled && (
+                      <Link href={`/pages/${p.id}/stats`} className="text-xs px-3 py-1 bg-emerald-900/50 text-emerald-400 rounded hover:bg-emerald-900">Metricas</Link>
                     )}
                     <button onClick={() => duplicate(p.id)} className="text-xs px-3 py-1 bg-white/[0.04] text-zinc-300 rounded hover:bg-white/[0.08]">Duplicar</button>
                     <button onClick={() => deletePage(p.id)} className="text-xs px-3 py-1 bg-red-900/50 text-red-400 rounded hover:bg-red-900">Deletar</button>

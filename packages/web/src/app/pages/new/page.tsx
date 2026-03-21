@@ -32,6 +32,8 @@ export default function NewPagePage() {
   const [price, setPrice] = useState('');
   const [originalPrice, setOriginalPrice] = useState('');
   const [checkoutUrl, setCheckoutUrl] = useState('');
+  const [pixelId, setPixelId] = useState('');
+  const [accessToken, setAccessToken] = useState('');
   const [generating, setGenerating] = useState(false);
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
@@ -181,6 +183,33 @@ export default function NewPagePage() {
     setSaving(false);
   };
 
+  const saveTracking = async () => {
+    if (!pageId) return;
+    if (checkoutUrl && !checkoutUrl.startsWith('https://')) {
+      alert('URL do checkout deve comecar com https://');
+      return;
+    }
+    if (checkoutUrl || pixelId || accessToken) {
+      setSaving(true);
+      try {
+        await apiFetch(`/pages/${pageId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            checkoutUrl: checkoutUrl || undefined,
+            pixelId: pixelId || undefined,
+            accessToken: accessToken || undefined,
+          }),
+        });
+      } catch (err) {
+        alert('Erro ao salvar tracking: ' + (err as Error).message);
+      }
+      setSaving(false);
+    }
+    setStep(4);
+  };
+
+  const skipTracking = () => setStep(4);
+
   const publishWithSlug = async () => {
     if (!pageId) return;
     setSaving(true);
@@ -194,7 +223,7 @@ export default function NewPagePage() {
       const res = await apiFetch<{ slug: string }>(`/pages/${pageId}/publish`, { method: 'PATCH' });
       setPublishedSlug(res.slug);
       setPublishedUrl(getPageUrl(res.slug));
-      setStep(4);
+      setStep(5);
     } catch (err) {
       alert('Erro ao publicar: ' + (err as Error).message);
     }
@@ -346,8 +375,48 @@ export default function NewPagePage() {
           </div>
         )}
 
-        {/* STEP 3: Custom Slug */}
+        {/* STEP 3: Tracking Configuration */}
         {step === 3 && (
+          <div className="space-y-4">
+            <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
+              <h2 className="text-white font-semibold mb-1">Tracking</h2>
+              <p className="text-zinc-500 text-xs mb-4">Configure o rastreamento de conversoes. Todos os campos sao opcionais.</p>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-1">URL do checkout (Yampi)</label>
+                  <input type="url" value={checkoutUrl} onChange={(e) => setCheckoutUrl(e.target.value)}
+                    placeholder="https://seguro.loja.com.br/r/PRODUTO"
+                    className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                </div>
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-1">Pixel ID (Meta)</label>
+                  <input type="text" value={pixelId} onChange={(e) => setPixelId(e.target.value)}
+                    placeholder="123456789"
+                    className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                </div>
+                <div>
+                  <label className="text-zinc-500 text-xs block mb-1">Access Token (Meta)</label>
+                  <input type="password" value={accessToken} onChange={(e) => setAccessToken(e.target.value)}
+                    placeholder="EAAxxxxxxx..."
+                    className="w-full bg-white/[0.04] text-white rounded-lg px-3 py-2 text-sm border border-white/[0.06]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={skipTracking} className="flex-1 py-3 bg-white/[0.04] text-zinc-300 rounded-lg font-semibold hover:bg-white/[0.08] transition">
+                Pular
+              </button>
+              <button onClick={saveTracking} disabled={saving}
+                className="flex-1 py-3 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition disabled:opacity-50">
+                {saving ? 'Salvando...' : 'Continuar'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Custom Slug */}
+        {step === 4 && (
           <div className="space-y-4">
             <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6">
               <h2 className="text-white font-semibold mb-1">URL personalizada</h2>
@@ -382,8 +451,8 @@ export default function NewPagePage() {
           </div>
         )}
 
-        {/* STEP 4: Published */}
-        {step === 4 && publishedSlug && (
+        {/* STEP 5: Published */}
+        {step === 5 && publishedSlug && (
           <div className="card-glow bg-[#111113] rounded-xl border border-white/[0.06] p-6 text-center">
             <h2 className="text-white font-semibold mb-2">Pagina publicada!</h2>
             <p className="text-emerald-500 text-sm mt-2 break-all">

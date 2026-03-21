@@ -19,4 +19,12 @@ export class CreatePageDto {
   @IsOptional()
   @IsString()
   checkoutUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  pixelId?: string;
+
+  @IsOptional()
+  @IsString()
+  accessToken?: string;
 }

@@ -6,12 +6,14 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PagesService } from './pages.service';
+import { CampaignsService } from '../campaigns/campaigns.service';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 import { AiCopyService } from '../ai/ai-copy.service';
@@ -29,6 +31,7 @@ const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/oct
 export class PagesController {
   constructor(
     private readonly pages: PagesService,
+    private readonly campaigns: CampaignsService,
     private readonly prisma: PrismaService,
     private readonly upload: UploadService,
     private readonly aiCopy: AiCopyService,
@@ -55,6 +58,24 @@ export class PagesController {
   async checkSlug(@Param('slug') slug: string) {
     const available = await this.pages.checkSlugAvailable(slug);
     return { available };
+  }
+
+  // IMPORTANT: :id/stats MUST come before :id to avoid route conflict
+  @Get(':id/stats')
+  async getStats(
+    @Param('id') id: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const campaign = await this.campaigns.findActiveByPageId(id);
+    if (!campaign) {
+      return { clicks: 0, viewContent: 0, checkouts: 0, purchases: 0, revenue: 0, aov: 0, viewContentRate: 0, checkoutRate: 0, purchaseRate: 0, overallConversion: 0 };
+    }
+    return this.campaigns.getStats(
+      campaign.id,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined,
+    );
   }
 
   @Get(':id')

@@ -162,7 +162,7 @@ export class CampaignsService {
     return { events, total, page, limit, pages: Math.ceil(total / limit) };
   }
 
-  async findActiveByCampaignPage(pageId: string) {
+  async findActiveByPageId(pageId: string) {
     return this.prisma.campaign.findFirst({
       where: { pageId, status: 'ACTIVE' },
       orderBy: { createdAt: 'desc' },
