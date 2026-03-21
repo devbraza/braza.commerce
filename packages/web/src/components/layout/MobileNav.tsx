@@ -46,9 +46,7 @@ export default function MobileNav() {
       {/* Top bar */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-white/[0.06] bg-[#0c0c0e]">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-white/[0.08] rounded-lg flex items-center justify-center text-[12px] font-bold text-white">
-            B
-          </div>
+          <img src="/logo.png" alt="Braza" className="w-7 h-7 rounded-lg" />
           <span className="text-[13px] font-bold text-white">braza.commerce</span>
         </div>
         <button

@@ -39,12 +39,7 @@ export default function Sidebar() {
     <aside className="hidden md:flex flex-col w-[220px] bg-[#0c0c0e] border-r border-white/[0.06] h-screen sticky top-0">
       {/* Logo */}
       <div className="h-16 flex items-center gap-3 px-5 border-b border-white/[0.06]">
-        <div className="relative">
-          <div className="w-8 h-8 bg-white/[0.08] rounded-lg flex items-center justify-center text-[13px] font-bold text-white">
-            B
-          </div>
-          <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#0c0c0e]" />
-        </div>
+        <img src="/logo.png" alt="Braza" className="w-8 h-8 rounded-lg" />
         <div>
           <p className="text-[13px] font-bold text-white tracking-tight">braza.commerce</p>
           <p className="text-[10px] text-zinc-500 font-medium">Product Pages</p>
