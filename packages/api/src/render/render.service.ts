@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import { Page, PageImage } from '@prisma/client';
 
@@ -93,7 +93,11 @@ export class RenderService {
     const images = page.images.sort((a, b) => a.position - b.position);
     html = this.renderCarousel(html, images);
 
-    // LCP image is inlined as base64 — no preload needed
+    // Preload LCP image (first carousel image)
+    if (images.length > 0) {
+      const preloadTag = `<link rel="preload" as="image" href="${images[0].url}" fetchpriority="high">`;
+      html = html.replace('</head>', preloadTag + '\n</head>');
+    }
 
     // Inject tracking script if campaign is active
     if (campaignId) {
@@ -146,30 +150,9 @@ export class RenderService {
     return html.replace('</body>', trackingScript + '\n</body>');
   }
 
-  private inlineFirstImage(imageUrl: string): string | null {
-    try {
-      // Extract pageId and filename from URL: .../uploads/pages/{pageId}/{filename}
-      const match = imageUrl.match(/\/uploads\/pages\/([^/]+)\/([^/]+)$/);
-      if (!match) return null;
-      const filePath = join(process.cwd(), 'uploads', 'pages', match[1], match[2]);
-      if (!existsSync(filePath)) return null;
-      const buffer = readFileSync(filePath);
-      return `data:image/webp;base64,${buffer.toString('base64')}`;
-    } catch {
-      return null;
-    }
-  }
-
   private renderCarousel(html: string, images: PageImage[]): string {
     const slides = images
-      .map((img) => {
-        if (img.position === 1) {
-          const inlined = this.inlineFirstImage(img.url);
-          const src = inlined || img.url;
-          return `<div class="carousel-slide"><img src="${src}" alt="Produto - foto ${img.position} de ${images.length}" width="480" height="480" fetchpriority="high"></div>`;
-        }
-        return `<div class="carousel-slide"><img src="${img.url}" alt="Produto - foto ${img.position} de ${images.length}" width="480" height="480" fetchpriority="auto" loading="lazy" decoding="async"></div>`;
-      })
+      .map((img) => `<div class="carousel-slide"><img src="${img.url}" alt="Produto - foto ${img.position} de ${images.length}" width="480" height="480" fetchpriority="${img.position === 1 ? 'high' : 'auto'}"${img.position > 1 ? ' loading="lazy" decoding="async"' : ''}></div>`)
       .join('\n      ');
 
     const dots = images

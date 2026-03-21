@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../common/services/prisma.service';
 import { UploadService } from '../upload/upload.service';
+import { StaticPageGeneratorService } from '../static-pages/static-page-generator.service';
 import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 import slugify from 'slugify';
@@ -9,9 +10,12 @@ import { randomBytes } from 'crypto';
 
 @Injectable()
 export class PagesService {
+  private readonly logger = new Logger(PagesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly upload: UploadService,
+    private readonly staticPages: StaticPageGeneratorService,
   ) {}
 
   private generateSlug(title?: string): string {
@@ -92,6 +96,14 @@ export class PagesService {
   async remove(id: string) {
     const page = await this.findOne(id);
     await this.upload.deletePageFiles(page.id);
+
+    // Remove static page if it was published
+    try {
+      await this.staticPages.remove(page.slug);
+    } catch (err) {
+      this.logger.error(`Failed to remove static page: ${err}`);
+    }
+
     return this.prisma.page.delete({ where: { id } });
   }
 
@@ -112,18 +124,37 @@ export class PagesService {
 
   async publish(id: string) {
     await this.findOne(id);
-    return this.prisma.page.update({
+    const page = await this.prisma.page.update({
       where: { id },
       data: { status: 'PUBLISHED', publishedAt: new Date() },
+      include: { images: { orderBy: { position: 'asc' } } },
     });
+
+    // Generate static page
+    try {
+      await this.staticPages.generate(page);
+    } catch (err) {
+      this.logger.error(`Failed to generate static page: ${err}`);
+    }
+
+    return page;
   }
 
   async unpublish(id: string) {
-    await this.findOne(id);
-    return this.prisma.page.update({
+    const page = await this.findOne(id);
+    const result = await this.prisma.page.update({
       where: { id },
       data: { status: 'ARCHIVED' },
     });
+
+    // Remove static page
+    try {
+      await this.staticPages.remove(page.slug);
+    } catch (err) {
+      this.logger.error(`Failed to remove static page: ${err}`);
+    }
+
+    return result;
   }
 
   async checkSlugAvailable(slug: string, excludePageId?: string): Promise<boolean> {
@@ -131,6 +162,14 @@ export class PagesService {
     if (!existing) return true;
     if (excludePageId && existing.id === excludePageId) return true;
     return false;
+  }
+
+  async regenerateAllStatic() {
+    const pages = await this.prisma.page.findMany({
+      where: { status: 'PUBLISHED' },
+      include: { images: { orderBy: { position: 'asc' } } },
+    });
+    return this.staticPages.regenerateAll(pages);
   }
 
   async findBySlug(slug: string) {

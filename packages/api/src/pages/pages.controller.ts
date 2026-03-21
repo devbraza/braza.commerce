@@ -45,6 +45,12 @@ export class PagesController {
     return this.pages.findAll();
   }
 
+  @Post('regenerate-static')
+  async regenerateAllStatic() {
+    const count = await this.pages.regenerateAllStatic();
+    return { success: true, regenerated: count };
+  }
+
   @Get('check-slug/:slug')
   async checkSlug(@Param('slug') slug: string) {
     const available = await this.pages.checkSlugAvailable(slug);
