@@ -40,6 +40,7 @@ export class RenderService {
     let hash = 0;
     for (const ch of page.id) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
     const soldCount = 150 + (Math.abs(hash) % 250);
+    const reviewCount = 120 + (Math.abs((hash * 7) | 0) % 200);
 
     let html = this.template;
 
@@ -53,6 +54,7 @@ export class RenderService {
     html = html.replace(/\{\{installments\}\}/g, installments);
     html = html.replace(/\{\{checkout_url\}\}/g, page.checkoutUrl || '#');
     html = html.replace(/\{\{sold_count\}\}/g, String(soldCount));
+    html = html.replace(/\{\{review_count\}\}/g, String(reviewCount));
 
     // Features
     const features = content.features || [];

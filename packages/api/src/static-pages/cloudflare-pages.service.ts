@@ -88,6 +88,20 @@ export class CloudflarePagesService {
         }
       }
 
+      // Copy legal pages (privacy, terms, refund, contact) to deploy root
+      const legalDir = join(__dirname, '..', 'render', 'legal');
+      if (existsSync(legalDir)) {
+        const legalPages = ['privacy', 'terms', 'refund', 'contact'];
+        for (const page of legalPages) {
+          const srcHtml = join(legalDir, `${page}.html`);
+          if (existsSync(srcHtml)) {
+            const destDir = join(tempDir, page);
+            await mkdir(destDir, { recursive: true });
+            await copyFile(srcHtml, join(destDir, 'index.html'));
+          }
+        }
+      }
+
       // Deploy via Wrangler (execFile with args array — safe from injection)
       const { stdout, stderr } = await execFileAsync('npx', [
         'wrangler', 'pages', 'deploy', tempDir,

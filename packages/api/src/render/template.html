@@ -313,7 +313,7 @@
       bottom: 70px;
       left: 16px;
       background: #fff;
-      border-radius: 10px;
+      border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.12);
       padding: 10px 14px;
       display: flex;
@@ -343,7 +343,7 @@
 
     .social-toast-text { font-size: 11px; line-height: 1.4; color: #333; }
     .social-toast-text strong { font-weight: 700; }
-    .social-toast-time { font-size: 9px; color: #aaa; margin-top: 1px; }
+    .social-toast-time { font-size: 9px; color: #999; margin-top: 1px; }
 
     @media (min-width: 481px) {
       .social-toast { bottom: 24px; left: 24px; }
@@ -352,7 +352,7 @@
     .cta-sub {
       text-align: center;
       font-size: 10px;
-      color: #aaa;
+      color: #999;
       padding: 6px 20px 0;
       display: flex;
       align-items: center;
@@ -360,7 +360,7 @@
       gap: 4px;
     }
 
-    .cta-sub svg { width: 10px; height: 10px; color: #bbb; flex-shrink: 0; }
+    .cta-sub svg { width: 10px; height: 10px; color: #999; flex-shrink: 0; }
 
     .payment-flags { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
 
@@ -399,7 +399,7 @@
       color: #666;
     }
 
-    .mini-review-author { font-size: 10px; color: #aaa; margin-top: 2px; }
+    .mini-review-author { font-size: 10px; color: #999; margin-top: 2px; }
 
     /* ===== TRUST PILLS ===== */
     .trust-pills {
@@ -473,7 +473,7 @@
       width: 250px;
       padding: 14px;
       background: #fafafa;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid #f0f0f0;
       scroll-snap-align: start;
     }
@@ -519,7 +519,7 @@
     .final-cta {
       padding: 28px 0 20px;
       text-align: center;
-      background: #f4f4f5;
+      background: #fafafa;
     }
 
     .final-title {
@@ -542,21 +542,21 @@
     }
 
     .timer-box {
-      background: #f4f4f5;
+      background: #fafafa;
       border: 1px solid #e0e0e0;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 10px 16px;
       text-align: center;
       min-width: 58px;
     }
 
     .timer-value { font-size: 24px; font-weight: 700; color: #111; line-height: 1; }
-    .timer-label { font-size: 8px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+    .timer-label { font-size: 8px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
     .timer-sep { font-size: 18px; font-weight: 700; color: #ddd; }
-    .timer-notice { font-size: 10px; color: #bbb; margin-bottom: 16px; }
+    .timer-notice { font-size: 10px; color: #999; margin-bottom: 16px; }
 
     /* ===== FOOTER ===== */
-    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #888; background: #f4f4f5; }
+    .footer { text-align: center; padding: 0 20px 16px; font-size: 10px; color: #888; background: #fafafa; }
     .footer a { color: #999; text-decoration: underline; }
     .footer a:hover { color: #666; }
 
@@ -570,7 +570,7 @@
     .footer-disclaimers p {
       font-size: 9px;
       line-height: 1.5;
-      color: #bbb;
+      color: #999;
       margin-bottom: 8px;
     }
 
@@ -613,11 +613,11 @@
 
     .sticky-lock {
       display: flex; align-items: center; gap: 3px;
-      font-size: 9px; color: #bbb; margin-top: 1px;
+      font-size: 9px; color: #999; margin-top: 1px;
     }
 
     .sticky-lock svg { width: 9px; height: 9px; }
-    .sticky-inner .cta-button { padding: 14px 16px; font-size: 14px; border-radius: 10px; }
+    .sticky-inner .cta-button { padding: 14px 16px; font-size: 14px; border-radius: 12px; }
 
     /* ===== RESPONSIVE ===== */
     .carousel { touch-action: pan-y; }
@@ -670,7 +670,7 @@
     <h1 class="product-name">{{product_name}}</h1>
     <div class="rating-row">
       <span class="rating-stars">★★★★★</span>
-      <span class="rating-count">4.9 · 243 avaliações</span>
+      <span class="rating-count">4.9 · {{review_count}} avaliações</span>
     </div>
     <div class="viewing-now">
       <div class="viewing-dot"></div>
@@ -790,7 +790,7 @@
   <!-- CTA 2 -->
   <div class="spacer"></div>
   <div class="cta-wrap">
-    <a href="{{checkout_url}}" class="cta-button">Comprar agora</a>
+    <a href="{{checkout_url}}" class="cta-button">Quero o meu</a>
   </div>
   <p class="cta-sub">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -875,7 +875,7 @@
       </div>
       <p class="timer-notice">Preço promocional expira em breve</p>
 
-      <a href="{{checkout_url}}" class="cta-button" style="margin: 0;">Comprar agora</a>
+      <a href="{{checkout_url}}" class="cta-button" style="margin: 0;">Garantir com desconto</a>
       <p class="cta-sub" style="padding: 6px 0 0;">
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Checkout seguro · Dados protegidos
@@ -988,12 +988,12 @@
 
   function up() { sticky.classList.toggle('hidden', hVis || fVis); }
 
-  // Timer — persists in localStorage
-  const TIMER_KEY = 'lp_timer_end';
-  let timerEnd = localStorage.getItem(TIMER_KEY);
+  // Timer — persists in sessionStorage (resets on new session, not on reload)
+  const TIMER_KEY = 'lp_timer_' + location.pathname;
+  let timerEnd = sessionStorage.getItem(TIMER_KEY);
   if (!timerEnd || Number(timerEnd) <= Date.now()) {
     timerEnd = Date.now() + 10 * 60 * 1000;
-    localStorage.setItem(TIMER_KEY, timerEnd);
+    sessionStorage.setItem(TIMER_KEY, timerEnd);
   }
   const tM = document.getElementById('timerMin');
   const tS = document.getElementById('timerSec');
