@@ -53,12 +53,16 @@ export class YampiController {
 
       if (event === 'order.paid') {
         const total = this.yampi.extractOrderTotal(resource);
-        await this.tracking.registerEvent(clickId, 'PURCHASE', total);
-        // Fire Meta CAPI Purchase
-        await this.capi.sendPurchase(clickWithCampaign, clickWithCampaign.campaign, total).catch((err) => {
-          this.logger.error(`CAPI Purchase error: ${err.message}`);
-        });
-        this.logger.log(`Purchase registered: click=${clickId}, value=${total}`);
+        const result = await this.tracking.registerEvent(clickId, 'PURCHASE', total);
+        if (result?.isNew) {
+          // Fire Meta CAPI Purchase only for new events (skip duplicates)
+          await this.capi.sendPurchase(clickWithCampaign, clickWithCampaign.campaign, total).catch((err) => {
+            this.logger.error(`CAPI Purchase error: ${err.message}`);
+          });
+          this.logger.log(`Purchase registered: click=${clickId}, value=${total}`);
+        } else {
+          this.logger.warn(`CAPI Purchase skipped: duplicate event for click ${clickId}`);
+        }
       } else if (event === 'order.created') {
         await this.tracking.registerEvent(clickId, 'INITIATE_CHECKOUT');
         this.logger.log(`Checkout registered: click=${clickId}`);

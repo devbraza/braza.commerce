@@ -11,7 +11,7 @@ export class CapiService {
       this.logger.debug('CAPI skip: no pixel configured');
       return;
     }
-    const eventId = `vc_${click.clickId}_${Date.now()}`;
+    const eventId = `vc_${click.clickId}`;
     await this.sendEvent(campaign.pixelId, campaign.accessToken, {
       event_name: 'ViewContent',
       event_id: eventId,
@@ -35,7 +35,7 @@ export class CapiService {
       this.logger.debug('CAPI skip: no pixel configured');
       return;
     }
-    const eventId = `purchase_${click.clickId}_${Date.now()}`;
+    const eventId = `purchase_${click.clickId}`;
     await this.sendEvent(campaign.pixelId, campaign.accessToken, {
       event_name: 'Purchase',
       event_id: eventId,

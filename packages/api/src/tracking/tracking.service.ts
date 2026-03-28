@@ -55,7 +55,7 @@ export class TrackingService {
     return { clickId, clickDbId: click.id };
   }
 
-  async registerEvent(clickId: string, type: string, value?: number) {
+  async registerEvent(clickId: string, type: string, value?: number): Promise<{ event: any; isNew: boolean } | null> {
     const click = await this.prisma.click.findUnique({ where: { clickId } });
     if (!click) {
       this.logger.warn(`Click not found: ${clickId}`);
@@ -68,7 +68,7 @@ export class TrackingService {
     });
     if (existing) {
       this.logger.warn(`Duplicate event skipped: ${type} for click ${clickId}`);
-      return existing;
+      return { event: existing, isNew: false };
     }
 
     const event = await this.prisma.event.create({
@@ -79,7 +79,7 @@ export class TrackingService {
       },
     });
     this.logger.log(`Event registered: ${type} for click ${clickId}${value ? ` value=${value}` : ''}`);
-    return event;
+    return { event, isNew: true };
   }
 
   async getClickWithCampaign(clickId: string) {
