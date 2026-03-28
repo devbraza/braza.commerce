@@ -11,8 +11,10 @@ export class CapiService {
       this.logger.debug('CAPI skip: no pixel configured');
       return;
     }
+    const eventId = `vc_${click.clickId}_${Date.now()}`;
     await this.sendEvent(campaign.pixelId, campaign.accessToken, {
       event_name: 'ViewContent',
+      event_id: eventId,
       event_time: Math.floor(Date.now() / 1000),
       action_source: 'website',
       event_source_url: pageUrl || '',
@@ -33,8 +35,10 @@ export class CapiService {
       this.logger.debug('CAPI skip: no pixel configured');
       return;
     }
+    const eventId = `purchase_${click.clickId}_${Date.now()}`;
     await this.sendEvent(campaign.pixelId, campaign.accessToken, {
       event_name: 'Purchase',
+      event_id: eventId,
       event_time: Math.floor(Date.now() / 1000),
       action_source: 'website',
       user_data: {
@@ -60,7 +64,7 @@ export class CapiService {
       });
       const body = await res.json();
       if (res.ok) {
-        this.logger.log(`CAPI ${eventData.event_name}: sent to pixel ${pixelId}`);
+        this.logger.log(`CAPI ${eventData.event_name} (${eventData.event_id}): sent to pixel ${pixelId}`);
       } else {
         this.logger.error(`CAPI ${eventData.event_name} error: ${JSON.stringify(body)}`);
       }
