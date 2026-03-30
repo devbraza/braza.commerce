@@ -64,8 +64,15 @@ export class YampiController {
           this.logger.warn(`CAPI Purchase skipped: duplicate event for click ${clickId}`);
         }
       } else if (event === 'order.created') {
-        await this.tracking.registerEvent(clickId, 'INITIATE_CHECKOUT');
-        this.logger.log(`Checkout registered: click=${clickId}`);
+        const result = await this.tracking.registerEvent(clickId, 'INITIATE_CHECKOUT');
+        if (result?.isNew) {
+          await this.capi.sendInitiateCheckout(clickWithCampaign, clickWithCampaign.campaign).catch((err) => {
+            this.logger.error(`CAPI InitiateCheckout error: ${err.message}`);
+          });
+          this.logger.log(`Checkout registered: click=${clickId}`);
+        } else {
+          this.logger.warn(`CAPI InitiateCheckout skipped: duplicate event for click ${clickId}`);
+        }
       } else if (event === 'transaction.payment.refused') {
         await this.tracking.registerEvent(clickId, 'PAYMENT_REFUSED');
         this.logger.log(`Payment refused: click=${clickId}`);

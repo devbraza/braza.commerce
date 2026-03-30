@@ -54,6 +54,26 @@ export class CapiService {
     });
   }
 
+  async sendInitiateCheckout(click: Click, campaign: Campaign) {
+    if (!campaign.pixelId || !campaign.accessToken) {
+      this.logger.debug('CAPI skip: no pixel configured');
+      return;
+    }
+    const eventId = `ic_${click.clickId}`;
+    await this.sendEvent(campaign.pixelId, campaign.accessToken, {
+      event_name: 'InitiateCheckout',
+      event_id: eventId,
+      event_time: Math.floor(Date.now() / 1000),
+      action_source: 'website',
+      user_data: {
+        client_ip_address: click.ip,
+        client_user_agent: click.userAgent,
+        ...(click.fbc && { fbc: click.fbc }),
+        ...(click.fbp && { fbp: click.fbp }),
+      },
+    });
+  }
+
   private async sendEvent(pixelId: string, accessToken: string, eventData: Record<string, unknown>) {
     const url = `${this.graphUrl}/${pixelId}/events`;
     try {
